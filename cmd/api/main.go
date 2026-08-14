@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,10 +17,13 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
+	"google.golang.org/grpc"
 
+	"github.com/oat431/backend-challenge/gen/userservice/v1"
 	"github.com/oat431/backend-challenge/internal/application"
 	"github.com/oat431/backend-challenge/internal/infrastructure/auth"
 	"github.com/oat431/backend-challenge/internal/infrastructure/config"
+	"github.com/oat431/backend-challenge/internal/infrastructure/grpcapi"
 	"github.com/oat431/backend-challenge/internal/infrastructure/httpapi"
 	"github.com/oat431/backend-challenge/internal/infrastructure/logger"
 	"github.com/oat431/backend-challenge/internal/infrastructure/mongodb"
@@ -87,9 +91,26 @@ func main() {
 		}
 	}()
 
+	// ---- driving adapter: gRPC (bonus) ----
+	grpcSrv := grpc.NewServer(grpc.UnaryInterceptor(grpcapi.UnaryAuthInterceptor(authSvc)))
+	userservicev1.RegisterUserServiceServer(grpcSrv, grpcapi.NewServer(users))
+
+	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
+	if err != nil {
+		logg.Error("grpc listen failed", "error", err)
+		os.Exit(1)
+	}
+	go func() {
+		logg.Info("grpc server listening", "port", cfg.GRPCPort)
+		if serveErr := grpcSrv.Serve(lis); serveErr != nil {
+			serverErr <- serveErr
+		}
+	}()
+
 	logg.Info("service started",
 		"db", cfg.DBName,
 		"http_port", cfg.HTTPPort,
+		"grpc_port", cfg.GRPCPort,
 		"worker_interval", cfg.WorkerInterval.String(),
 	)
 
@@ -107,6 +128,19 @@ func main() {
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logg.Error("http shutdown failed", "error", err)
+	}
+
+	// GracefulStop waits for in-flight RPCs; fall back to hard Stop after 5s.
+	grpcStopped := make(chan struct{})
+	go func() {
+		grpcSrv.GracefulStop()
+		close(grpcStopped)
+	}()
+	select {
+	case <-grpcStopped:
+	case <-time.After(5 * time.Second):
+		logg.Warn("grpc graceful stop timed out, forcing stop")
+		grpcSrv.Stop()
 	}
 
 	// ctx cancellation also stops the worker goroutine.

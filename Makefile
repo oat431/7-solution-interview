@@ -31,8 +31,12 @@ docker-down:
 smoke:
 	bash scripts/smoke.sh
 
-# gRPC bonus phase (requires protoc, protoc-gen-go, protoc-gen-go-grpc)
+# gRPC bonus phase (requires protoc, protoc-gen-go, protoc-gen-go-grpc).
+# PROTOC defaults to the local tools/ copy; override if protoc is on PATH.
+PROTOC ?= tools/protoc/bin/protoc
+
 gen-proto:
-	protoc --go_out=gen --go_opt=paths=source_relative \
-	       --go-grpc_out=gen --go-grpc_opt=paths=source_relative \
+	rm -rf gen
+	$(PROTOC) --go_out=. --go_opt=module=github.com/oat431/backend-challenge \
+	       --go-grpc_out=. --go-grpc_opt=module=github.com/oat431/backend-challenge \
 	       proto/user_service/v1/user_service.proto

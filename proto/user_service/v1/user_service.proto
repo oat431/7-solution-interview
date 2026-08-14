@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package userservice.v1;
+
+option go_package = "github.com/oat431/backend-challenge/gen/userservice/v1;userservicev1";
+
+// User is the wire representation of a user. No password material is ever
+// included in gRPC responses.
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string created_at = 4; // RFC 3339 timestamp
+}
+
+message CreateUserRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+// UserService exposes user management over gRPC. All RPCs require a valid
+// JWT in the "authorization" metadata header ("Bearer <token>"), enforced by
+// a unary interceptor.
+service UserService {
+  rpc CreateUser(CreateUserRequest) returns (User);
+  rpc GetUser(GetUserRequest) returns (User);
+}
