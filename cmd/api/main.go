@@ -18,6 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	"github.com/oat431/backend-challenge/gen/userservice/v1"
 	"github.com/oat431/backend-challenge/internal/application"
@@ -92,8 +93,11 @@ func main() {
 	}()
 
 	// ---- driving adapter: gRPC (bonus) ----
+	// Reflection is enabled so clients like grpcurl can discover the service
+	// without a local proto file — zero-friction reviewer experience.
 	grpcSrv := grpc.NewServer(grpc.UnaryInterceptor(grpcapi.UnaryAuthInterceptor(authSvc)))
 	userservicev1.RegisterUserServiceServer(grpcSrv, grpcapi.NewServer(users))
+	reflection.Register(grpcSrv)
 
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
 	if err != nil {
