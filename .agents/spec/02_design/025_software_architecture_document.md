@@ -84,7 +84,7 @@ flowchart TB
 ## 3. Package Structure
 
 ```
-user-management-api/
+7-solution-interview/
 ├── cmd/api/main.go              # composition root: config, wiring, servers, worker, shutdown
 ├── internal/
 │   ├── domain/

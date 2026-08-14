@@ -156,7 +156,7 @@ Proto: `proto/user_service/v1/user_service.proto`
 ```proto
 syntax = "proto3";
 package userservice.v1;
-option go_package = "github.com/<owner>/user-management-api/gen/userservice/v1;userservicev1";
+option go_package = "github.com/oat431/7-solution-interview/gen/userservice/v1;userservicev1";
 
 message User {
   string id = 1;
