@@ -44,8 +44,8 @@ tags: [spec-index, interview, golang, mongodb, jwt, hexagonal]
 
 | # | Assumption | Rationale |
 |---|-----------|-----------|
-| A1 | Go 1.22+ (pin latest stable at implementation) | stdlib `ServeMux` method+wildcard routing; modern toolchain |
-| A2 | Stdlib `net/http` router, zero HTTP frameworks | Idiomatic Go, minimal deps, reviewer-friendly |
+| A1 | Go 1.22+ (pin latest stable at implementation) | Fiber v3 minimum; modern toolchain |
+| A2 | Fiber v3 for the REST adapter (fasthttp engine); gRPC stays native `grpc-go` | User-preferred framework; structured middleware, fast router; see ADR-02 |
 | A3 | `go.mongodb.org/mongo-driver` (official driver, v2 line) | Explicitly required by challenge |
 | A4 | `golang-jwt/jwt/v5`, HMAC **HS256**, secret from env (`JWT_SECRET`, ≥32 bytes enforced at startup) | Challenge mandates HS256 |
 | A5 | `golang.org/x/crypto/bcrypt` (default cost 10) | Industry standard for password hashing |

@@ -48,7 +48,7 @@ RESTful user management API in Go with MongoDB persistence and JWT authenticatio
 
 ## Stack
 
-Go 1.22+ (stdlib router) · MongoDB (official driver) · `golang-jwt/v5` (HS256) · `bcrypt` · gRPC
+Go 1.22+ (Fiber v3) · MongoDB (official driver) · `golang-jwt/v5` (HS256) · `bcrypt` · gRPC
 
 ## Setup & Run
 
@@ -143,7 +143,7 @@ cmd/api/main.go              # composition root
 internal/
   domain/                    # entity + errors (pure, stdlib-only)
   application/               # use cases + ports (interfaces)
-  infrastructure/            # Mongo / JWT / bcrypt / HTTP / gRPC adapters
+  infrastructure/            # Mongo / JWT / bcrypt / Fiber HTTP / gRPC adapters
   worker/                    # 10s user-count logger
 testutil/                    # hand-written fake repository
 proto/ + gen/                # protobuf definitions + generated code
@@ -154,7 +154,7 @@ proto/ + gen/                # protobuf definitions + generated code
 | # | Decision | Why |
 |---|----------|-----|
 | 1 | Hexagonal (ports & adapters) layout | bonus + testability + decouples domain from Mongo |
-| 2 | Stdlib `net/http` router (Go 1.22+), no web framework | idiomatic Go, minimal deps |
+| 2 | Fiber v3 for the REST adapter (fasthttp engine); gRPC stays native grpc-go | Preferred framework; structured middleware; custom JWT middleware (not `jwtware`) so REST and gRPC share one verifier |
 | 3 | Mongo behind `UserRepository` interface; tests use a hand-written in-memory fake (no mock lib) | challenge's "mock MongoDB where appropriate"; adapter stays thin |
 | 4 | bcrypt (cost 10) + HS256 JWT | industry defaults matching challenge constraints |
 | 5 | Register (public) and Create User (JWT) both exist, sharing one use case | challenge lists both operations |

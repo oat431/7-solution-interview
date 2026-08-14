@@ -1,8 +1,9 @@
 package httpapi
 
 import (
-	"net/http"
 	"time"
+
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/oat431/7-solution-interview/internal/application"
 	"github.com/oat431/7-solution-interview/internal/domain"
@@ -54,23 +55,22 @@ func NewAuthHandler(users *application.UserService, auth *application.AuthServic
 }
 
 // Register creates a user and returns 201 without a token.
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	createUser(w, r, h.users)
+func (h *AuthHandler) Register(c fiber.Ctx) error {
+	return createUser(c, h.users)
 }
 
 // Login exchanges credentials for a JWT.
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Login(c fiber.Ctx) error {
 	var req loginRequest
-	if !decodeJSON(w, r, &req) {
-		return
+	if err := decodeJSON(c, &req); err != nil {
+		return err
 	}
 
-	res, err := h.auth.Login(r.Context(), req.Email, req.Password)
+	res, err := h.auth.Login(c.Context(), req.Email, req.Password)
 	if err != nil {
-		writeError(w, err)
-		return
+		return err
 	}
-	writeJSON(w, http.StatusOK, loginResponse{
+	return c.JSON(loginResponse{
 		Token:     res.Token,
 		TokenType: "Bearer",
 		ExpiresIn: int64(res.ExpiresIn / time.Second),
@@ -87,73 +87,68 @@ func NewUserHandler(users *application.UserService) *UserHandler {
 }
 
 // Create mirrors register behind JWT auth (A7: one use case, two routes).
-func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
-	createUser(w, r, h.users)
+func (h *UserHandler) Create(c fiber.Ctx) error {
+	return createUser(c, h.users)
 }
 
-func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
-	user, err := h.users.Get(r.Context(), r.PathValue("id"))
+func (h *UserHandler) Get(c fiber.Ctx) error {
+	user, err := h.users.Get(c.Context(), c.Params("id"))
 	if err != nil {
-		writeError(w, err)
-		return
+		return err
 	}
-	writeJSON(w, http.StatusOK, user)
+	return c.JSON(user)
 }
 
-func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
-	users, err := h.users.List(r.Context())
+func (h *UserHandler) List(c fiber.Ctx) error {
+	users, err := h.users.List(c.Context())
 	if err != nil {
-		writeError(w, err)
-		return
+		return err
 	}
-	writeJSON(w, http.StatusOK, listResponse{Data: users, Meta: listMeta{Count: len(users)}})
+	return c.JSON(listResponse{Data: users, Meta: listMeta{Count: len(users)}})
 }
 
-func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Update(c fiber.Ctx) error {
 	var req updateRequest
-	if !decodeJSON(w, r, &req) {
-		return
+	if err := decodeJSON(c, &req); err != nil {
+		return err
 	}
 
-	user, err := h.users.Update(r.Context(), r.PathValue("id"), application.UpdateUserInput{
+	user, err := h.users.Update(c.Context(), c.Params("id"), application.UpdateUserInput{
 		Name:  req.Name,
 		Email: req.Email,
 	})
 	if err != nil {
-		writeError(w, err)
-		return
+		return err
 	}
-	writeJSON(w, http.StatusOK, user)
+	return c.JSON(user)
 }
 
-func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	if err := h.users.Delete(r.Context(), r.PathValue("id")); err != nil {
-		writeError(w, err)
-		return
+func (h *UserHandler) Delete(c fiber.Ctx) error {
+	if err := h.users.Delete(c.Context(), c.Params("id")); err != nil {
+		return err
 	}
-	w.WriteHeader(http.StatusNoContent)
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // Health serves the liveness probe used by docker healthchecks.
-func Health(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, healthResponse{Status: "ok"})
+func Health(c fiber.Ctx) error {
+	return c.JSON(healthResponse{Status: "ok"})
 }
 
 // createUser is the shared path behind POST /auth/register and POST /users.
-func createUser(w http.ResponseWriter, r *http.Request, users *application.UserService) {
+func createUser(c fiber.Ctx, users *application.UserService) error {
 	var req registerRequest
-	if !decodeJSON(w, r, &req) {
-		return
+	if err := decodeJSON(c, &req); err != nil {
+		return err
 	}
 
-	user, err := users.Create(r.Context(), domain.NewUserInput{
+	user, err := users.Create(c.Context(), domain.NewUserInput{
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: req.Password,
 	})
 	if err != nil {
-		writeError(w, err)
-		return
+		return err
 	}
-	writeJSON(w, http.StatusCreated, user)
+	return c.Status(fiber.StatusCreated).JSON(user)
 }

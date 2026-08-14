@@ -25,7 +25,7 @@ standard_ref:
 |-------|--------|
 | Base URL (REST) | `http://localhost:8080/api/v1` (env `HTTP_PORT`, default 8080) |
 | gRPC endpoint | `localhost:50051` (env `GRPC_PORT`) |
-| Protocol | HTTP/1.1 JSON (REST) + HTTP/2 protobuf (gRPC) |
+| Protocol | HTTP/1.1 JSON (REST, Fiber v3) + HTTP/2 protobuf (gRPC) |
 | Authentication | Bearer JWT, HS256, `Authorization: Bearer <token>` |
 | Content-Type | `application/json; charset=utf-8` |
 | Versioning | URL path `/api/v1/` |
@@ -192,11 +192,11 @@ service UserService {
 
 | Concern | Behavior |
 |---------|----------|
-| Logging middleware | `slog` line per request: `method`, `path`, `status`, `duration_ms` — wraps all routes, never logs secrets |
+| Logging middleware | `slog` line per request: `method`, `path`, `status`, `duration_ms` (+ `request_id` from Fiber requestid) — wraps all routes, never logs secrets |
 | User count worker | Ticker, default 10s (`WORKER_INTERVAL` env), logs `total_users=N`; stops on shutdown context |
-| Graceful shutdown | `signal.NotifyContext(SIGINT, SIGTERM)` → stop accepting, drain in-flight (HTTP `Shutdown`, gRPC `GracefulStop`), cancel worker, exit 0 |
+| Graceful shutdown | `signal.NotifyContext(SIGINT, SIGTERM)` → stop accepting, drain in-flight (Fiber `ShutdownWithContext`, gRPC `GracefulStop`), cancel worker, exit 0 |
 | Health | `GET /healthz` (public) → `200 {"status":"ok"}`; compose healthcheck uses it |
-| Body limit | `http.MaxBytesReader` 1 MB per request |
+| Body limit | Fiber `Config.BodyLimit` 1 MB per request; unknown JSON fields rejected (password not smuggled through update) |
 
 ## 7. Sample Requests (also live in README 031)
 

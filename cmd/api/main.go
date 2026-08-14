@@ -4,16 +4,15 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
 	"log/slog"
 	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/gofiber/fiber/v3"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
@@ -65,7 +64,7 @@ func main() {
 	go worker.NewUserCountWorker(repo, logg).Run(ctx, cfg.WorkerInterval)
 
 	serverErr := make(chan error, 1)
-	httpSrv := serveHTTP(logg, httpapi.NewRouter(logg, users, authSvc), cfg.HTTPPort, serverErr)
+	httpApp := serveFiber(logg, httpapi.NewApp(logg, users, authSvc), cfg.HTTPPort, serverErr)
 	grpcSrv := serveGRPC(logg, users, authSvc, cfg.GRPCPort, serverErr)
 
 	logg.Info("service started",
@@ -83,7 +82,7 @@ func main() {
 	}
 	stop()
 
-	shutdown(logg, httpSrv, grpcSrv, client)
+	shutdown(logg, httpApp, grpcSrv, client)
 }
 
 func connectMongo(ctx context.Context, uri string) (*mongo.Client, error) {
@@ -107,19 +106,14 @@ func ensureIndexes(ctx context.Context, repo *mongodb.UserRepository) error {
 	return repo.EnsureIndexes(idxCtx)
 }
 
-func serveHTTP(logg *slog.Logger, handler http.Handler, port string, serverErr chan<- error) *http.Server {
-	srv := &http.Server{
-		Addr:              ":" + port,
-		Handler:           handler,
-		ReadHeaderTimeout: 5 * time.Second,
-	}
+func serveFiber(logg *slog.Logger, app *fiber.App, port string, serverErr chan<- error) *fiber.App {
 	go func() {
 		logg.Info("http server listening", "port", port)
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := app.Listen(":" + port); err != nil {
 			serverErr <- err
 		}
 	}()
-	return srv
+	return app
 }
 
 func serveGRPC(logg *slog.Logger, users *application.UserService, authSvc *application.AuthService, port string, serverErr chan<- error) *grpc.Server {
@@ -143,11 +137,11 @@ func serveGRPC(logg *slog.Logger, users *application.UserService, authSvc *appli
 	return grpcSrv
 }
 
-func shutdown(logg *slog.Logger, httpSrv *http.Server, grpcSrv *grpc.Server, client *mongo.Client) {
+func shutdown(logg *slog.Logger, httpApp *fiber.App, grpcSrv *grpc.Server, client *mongo.Client) {
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
-	if err := httpSrv.Shutdown(ctx); err != nil {
+	if err := httpApp.ShutdownWithContext(ctx); err != nil {
 		logg.Error("http shutdown failed", "error", err)
 	}
 

@@ -27,7 +27,7 @@ standard_ref:
 | Overall style | **Hexagonal (ports & adapters)**, single deployable | Named bonus item; clean separation of domain/application/infrastructure |
 | Communication | REST (HTTP/1.1 JSON) + gRPC (HTTP/2 protobuf) — two adapters, one core | REST required; gRPC bonus; shared core proves the pattern's payoff |
 | Persistence | MongoDB behind a repository **port** (interface) | Challenge requirement + bonus abstraction; enables fakes in tests |
-| Router | stdlib `net/http` `ServeMux` (Go 1.22+ method+wildcard routing) | Idiomatic, zero-dep, reviewer-friendly |
+| Router | **Fiber v3** (fasthttp engine) for REST; native grpc-go for gRPC | User-preferred framework; structured middleware, fast router (ADR-02) |
 | Config | env vars, fail-fast validation at startup | 12-factor; no config framework |
 | Logging | stdlib `log/slog` (JSON handler) | Structured, zero-dep |
 | Deployment | Multi-stage Dockerfile + docker-compose (API + Mongo) | Bonus item; zero-friction review |
@@ -98,7 +98,7 @@ flowchart TB
 │   │   ├── mongodb/user_repo.go # adapter: implements ports.UserRepository
 │   │   ├── auth/bcrypt.go       # PasswordHasher adapter
 │   │   ├── auth/jwt.go          # TokenManager adapter (HS256)
-│   │   ├── httpapi/             # REST adapter: router.go, handlers, middleware.go, dto.go
+│   │   ├── httpapi/             # REST adapter (Fiber v3): app.go, handlers, middleware, errors
 │   │   ├── grpcapi/             # gRPC adapter: server.go, interceptor.go
 │   │   └── logger/logger.go     # slog JSON setup
 │   └── worker/usercount.go      # 10s count logger (FR-009)
@@ -122,14 +122,14 @@ flowchart TB
 | `ports.PasswordHasher` | `Hash(pw) (string, err)` / `Compare(hash, pw) error` | bcrypt adapter |
 | `application.UserService` | orchestrates use cases, maps domain errors → API-agnostic errors | depends only on ports |
 | `application.AuthService` | login flow, token issuance, shared token verification | used by REST middleware AND gRPC interceptor |
-| `httpapi.Router` | `ServeMux`, route registration, middleware chain, JSON decode/encode, error envelope | calls UserService/AuthService |
+| `httpapi.App` | `fiber.App`: route groups (`/api/v1`), request-id/logging/recover middleware chain, central `ErrorHandler` rendering the error envelope, strict JSON decoding (unknown fields rejected) | calls UserService/AuthService |
 | `grpcapi.Server` | implements `UserServiceServer`, unary interceptor → AuthService.Verify | same core |
 | `worker.UserCountWorker` | `Run(ctx, interval, repo, logger)` — ticker loop, exits on ctx cancel | interval injectable (AC-009c) |
 | `cmd/api/main` | env config + validation, Mongo connect + index ensure, wiring, both servers, worker, graceful shutdown | — |
 
 ## 5. Request Flows
 
-**REST login:** middleware(log) → handler decode → AuthService.Login → repo.FindByEmail → bcrypt.Compare → jwt.Issue → envelope.
+**REST login:** Fiber middleware chain (requestid → slog logger → recover) → handler decode (strict) → AuthService.Login → repo.FindByEmail → bcrypt.Compare → jwt.Issue → envelope via `c.JSON`.
 
 **gRPC CreateUser:** interceptor (JWT from metadata → AuthService.Verify) → server.CreateUser → UserService.Create → repo.Create → proto User.
 
@@ -170,7 +170,7 @@ flowchart TB
 | # | Decision | Rationale |
 |---|----------|-----------|
 | ADR-01 | Hexagonal layout | bonus item + testability + demonstrates senior-level structure |
-| ADR-02 | stdlib router | idiomatic, minimal deps, Go 1.22+ mux is sufficient |
+| ADR-02 | Fiber v3 for the REST adapter (fasthttp engine); grpc-go for gRPC | User-preferred framework: structured middleware, fast router, graceful shutdown. Trade-off accepted: more dependencies than stdlib, fasthttp semantics (offset by our own strict decoding + error envelope). Custom JWT middleware instead of `jwtware` so REST and gRPC share one verifier (ADR-04) |
 | ADR-03 | Repository port + fake (no mock library) | challenge says "mock where appropriate" — interfaces make it clean without dep |
 | ADR-04 | One application core, REST + gRPC adapters | proves hexagonal payoff; avoids duplicated logic |
 | ADR-05 | bcrypt + HS256 | industry defaults for the stated requirements |

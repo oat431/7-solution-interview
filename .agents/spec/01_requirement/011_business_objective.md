@@ -83,8 +83,8 @@ The challenge's evaluation criteria ARE our strategy. Each criterion maps to an 
 
 | Field | Detail |
 |-------|--------|
-| Statement | Domain/application/infrastructure separation; Mongo behind a repository port; stdlib-first |
-| Measurable | Package tree matches 025; domain package has zero external imports; only 5 external deps (mongo-driver, jwt, bcrypt, grpc, protobuf) |
+| Statement | Domain/application/infrastructure separation; Mongo behind a repository port; Fiber v3 driving adapter |
+| Measurable | Package tree matches 025; domain package has zero external imports; only purpose-built direct deps (mongo-driver, jwt, bcrypt, fiber, grpc, protobuf) |
 | Relevant | "Code quality/structure", "Idiomatic Go", "Abstraction of MongoDB" |
 
 ### OBJ-04: Test Coverage & Mocking

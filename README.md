@@ -8,7 +8,7 @@ RESTful user management API in Go with MongoDB persistence and JWT authenticatio
 - ✅ Register + login → JWT (HS256), middleware-protected endpoints
 - ✅ CRUD: create, get by id, list, update name/email, delete
 - ✅ Official MongoDB Go driver (v2); unique email index created at startup
-- ✅ Logging middleware: method, path, status, duration (structured `slog`)
+- ✅ Logging middleware: method, path, status, duration (+ request ID) via structured `slog`
 - ✅ Background goroutine: logs total user count every 10s
 - ✅ Unit tests with std `testing` + hand-written fakes (`-race` clean, core coverage 83–100%)
 - 🎁 gRPC server (`CreateUser`, `GetUser`) secured by JWT metadata
@@ -17,7 +17,7 @@ RESTful user management API in Go with MongoDB persistence and JWT authenticatio
 
 ## Stack
 
-Go 1.25 · MongoDB (official driver v2) · `golang-jwt/v5` (HS256) · `golang.org/x/crypto/bcrypt` · gRPC (bonus)
+Go 1.25 · Fiber v3 (REST) · MongoDB (official driver v2) · `golang-jwt/v5` (HS256) · `golang.org/x/crypto/bcrypt` · gRPC (bonus)
 
 ## Setup & Run
 
@@ -113,7 +113,7 @@ internal/
   infrastructure/
     mongodb/                 # MongoDB adapter (official driver v2)
     auth/                    # bcrypt + JWT (HS256) adapters
-    httpapi/                 # REST adapter: router, handlers, middleware
+    httpapi/                 # REST adapter (Fiber v3): app, handlers, middleware, error envelope
     grpcapi/                 # gRPC adapter (bonus)
     config/                  # env config with fail-fast validation
     logger/                  # slog JSON setup
@@ -129,14 +129,14 @@ scripts/smoke.sh             # end-to-end smoke test
 make test    # go test -race -cover ./...
 ```
 
-Coverage across the core (domain/application/http/grpc/worker) is 83–100%. The MongoDB adapter itself is excluded from unit coverage by design: it is a thin driver wrapper verified by the smoke test against a real Mongo, while all business logic is tested against the in-memory fake behind the repository port.
+Coverage across the core (domain/application/http/grpc/worker) is 83–100%. The MongoDB adapter itself is excluded from unit coverage by design: it is a thin driver wrapper verified by the smoke test against a real Mongo, while all business logic is tested against the in-memory fake behind the repository port. HTTP tests run in-process through Fiber's `app.Test` — no server needed.
 
 ## Assumptions & Design Decisions
 
 | # | Decision | Why |
 |---|----------|-----|
 | 1 | Hexagonal (ports & adapters) layout | Bonus item + testability + decouples domain from Mongo |
-| 2 | Stdlib `net/http` router (Go 1.22+ patterns), no web framework | Idiomatic Go, minimal deps |
+| 2 | Fiber v3 for the REST adapter (fasthttp engine); gRPC stays native grpc-go | Preferred framework; structured middleware; custom JWT middleware (not `jwtware`) so REST and gRPC share one verifier |
 | 3 | Mongo behind a `UserRepository` interface; tests use a hand-written in-memory fake (no mock library) | Challenge's "mock MongoDB where appropriate"; adapter stays thin |
 | 4 | bcrypt (default cost) + HS256 JWT | Industry defaults matching the challenge constraints |
 | 5 | Register (public) and Create User (JWT-protected) both exist, sharing one use case | The challenge lists both operations separately |

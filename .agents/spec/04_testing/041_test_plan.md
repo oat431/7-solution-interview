@@ -33,7 +33,7 @@ standard_ref:
 |-------|----------|--------|
 | Domain | Table-driven pure tests (`domain.NewUser` validation matrix, errors) | ≥90% |
 | Application | Fake repository + real bcrypt/JWT libs with test secret; all use cases happy + error paths | ≥85% |
-| HTTP | `httptest.NewRecorder` + real router against fake repo: status codes, envelopes, auth 401 matrix, logging middleware capture | ≥85% |
+| HTTP | Fiber in-process tests (`app.Test` + `httptest.NewRequest`) against fake repo: status codes, envelopes, auth 401 matrix, logging middleware capture, 404/405 semantics | ≥85% |
 | gRPC | Server + fake repo, interceptor auth matrix (`Unauthenticated`), `context`-based calls | ≥80% |
 | Worker | Injected short interval (e.g. 20ms), fake repo counter, ctx cancel → goroutine exits | ≥80% |
 | **Overall** | `go test ./... -race` green; `-cover` ≥ **80%** aggregate | ≥80% |

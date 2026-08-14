@@ -60,7 +60,7 @@ standard_ref:
 | Unit coverage (aggregate) | ≥80% | `go test -cover` |
 | Race detector | 0 races | `go test -race` |
 | Vet / format | 0 issues | `go vet`, `gofmt` |
-| Dependency count | ≤6 direct external modules | `go mod graph` (README states rationale) |
+| Dependency count | ≤8 direct external modules, purpose-built only (mongo-driver, jwt, bcrypt, fiber, grpc, protobuf) | `go mod graph` (README states rationale) |
 
 ## 4. Exceptions & Notes
 
