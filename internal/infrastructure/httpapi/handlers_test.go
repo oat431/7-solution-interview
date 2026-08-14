@@ -30,8 +30,8 @@ func newTestEnv() *testEnv {
 	repo := testutil.NewFakeUserRepository()
 	hasher := testutil.FakeHasher{}
 	users := application.NewUserService(repo, hasher)
-	tokens := auth.NewJWTManager([]byte(testSecret))
-	authSvc := application.NewAuthService(repo, hasher, tokens, time.Hour)
+	tokens := auth.NewJWTManager([]byte(testSecret), time.Hour)
+	authSvc := application.NewAuthService(repo, hasher, tokens)
 	var buf bytes.Buffer
 	log := slog.New(slog.NewJSONHandler(&buf, nil))
 	return &testEnv{
@@ -249,7 +249,8 @@ func TestProtectedEndpointsRejectGarbageToken(t *testing.T) {
 
 func TestProtectedEndpointsRejectExpiredToken(t *testing.T) {
 	e := newTestEnv()
-	expired, err := e.tokens.Issue(context.Background(), "sub", "ada@example.com", -time.Minute)
+	expiredMgr := auth.NewJWTManager([]byte(testSecret), -time.Minute)
+	expired, _, err := expiredMgr.Issue(context.Background(), application.TokenClaims{Subject: "sub", Email: "ada@example.com"})
 	if err != nil {
 		t.Fatalf("issue expired token: %v", err)
 	}

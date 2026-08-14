@@ -37,8 +37,8 @@ func newGRPCEnv(t *testing.T) *grpcEnv {
 	repo := testutil.NewFakeUserRepository()
 	hasher := testutil.FakeHasher{}
 	users := application.NewUserService(repo, hasher)
-	tokens := auth.NewJWTManager([]byte(testSecret))
-	authSvc := application.NewAuthService(repo, hasher, tokens, time.Hour)
+	tokens := auth.NewJWTManager([]byte(testSecret), time.Hour)
+	authSvc := application.NewAuthService(repo, hasher, tokens)
 
 	lis := bufconn.Listen(bufSize)
 	srv := grpc.NewServer(grpc.UnaryInterceptor(grpcapi.UnaryAuthInterceptor(authSvc)))
@@ -74,7 +74,7 @@ func (e *grpcEnv) ctx(token string) context.Context {
 
 func (e *grpcEnv) validToken(t *testing.T) string {
 	t.Helper()
-	token, err := e.tokens.Issue(context.Background(), "sub", "ada@example.com", time.Hour)
+	token, _, err := e.tokens.Issue(context.Background(), application.TokenClaims{Subject: "sub", Email: "ada@example.com"})
 	if err != nil {
 		t.Fatalf("issue token: %v", err)
 	}
@@ -183,7 +183,8 @@ func TestGarbageToken(t *testing.T) {
 
 func TestExpiredToken(t *testing.T) {
 	e := newGRPCEnv(t)
-	expired, err := e.tokens.Issue(context.Background(), "sub", "ada@example.com", -time.Minute)
+	expiredMgr := auth.NewJWTManager([]byte(testSecret), -time.Minute)
+	expired, _, err := expiredMgr.Issue(context.Background(), application.TokenClaims{Subject: "sub", Email: "ada@example.com"})
 	if err != nil {
 		t.Fatalf("issue: %v", err)
 	}

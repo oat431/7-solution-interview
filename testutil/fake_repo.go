@@ -109,23 +109,23 @@ func (f *FakeUserRepository) List(_ context.Context) ([]domain.User, error) {
 	return out, nil
 }
 
-func (f *FakeUserRepository) Update(_ context.Context, id string, name, email *string) (domain.User, error) {
+func (f *FakeUserRepository) Update(_ context.Context, id string, in application.UpdateUserInput) (domain.User, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	su, ok := f.users[id]
 	if !ok {
 		return domain.User{}, domain.ErrNotFound
 	}
-	if email != nil {
-		if owner, exists := f.emailIndex[*email]; exists && owner != id {
+	if in.Email != nil {
+		if owner, exists := f.emailIndex[*in.Email]; exists && owner != id {
 			return domain.User{}, domain.ErrEmailExists
 		}
 		delete(f.emailIndex, su.user.Email)
-		su.user.Email = *email
-		f.emailIndex[*email] = id
+		su.user.Email = *in.Email
+		f.emailIndex[*in.Email] = id
 	}
-	if name != nil {
-		su.user.Name = *name
+	if in.Name != nil {
+		su.user.Name = *in.Name
 	}
 	f.users[id] = su
 	return su.user, nil

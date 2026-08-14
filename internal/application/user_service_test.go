@@ -115,7 +115,7 @@ func TestUpdateNameOnly(t *testing.T) {
 	seeded := repo.Seed("Ada", "ada@example.com", "h:x")
 
 	name := "Ada Byron"
-	u, err := svc.Update(context.Background(), seeded.ID, &name, nil)
+	u, err := svc.Update(context.Background(), seeded.ID, application.UpdateUserInput{Name: &name})
 	if err != nil {
 		t.Fatalf("update: %v", err)
 	}
@@ -130,7 +130,7 @@ func TestUpdateEmailConflict(t *testing.T) {
 	repo.Seed("Grace", "grace@example.com", "h:x")
 
 	email := "grace@example.com"
-	_, err := svc.Update(context.Background(), seeded.ID, nil, &email)
+	_, err := svc.Update(context.Background(), seeded.ID, application.UpdateUserInput{Email: &email})
 	if !errors.Is(err, domain.ErrEmailExists) {
 		t.Fatalf("expected ErrEmailExists, got %v", err)
 	}
@@ -140,7 +140,7 @@ func TestUpdateEmptyBody(t *testing.T) {
 	svc, repo := newTestService()
 	seeded := repo.Seed("Ada", "ada@example.com", "h:x")
 
-	_, err := svc.Update(context.Background(), seeded.ID, nil, nil)
+	_, err := svc.Update(context.Background(), seeded.ID, application.UpdateUserInput{})
 	var verr domain.ValidationError
 	if !errors.As(err, &verr) {
 		t.Fatalf("expected ValidationError, got %v", err)
@@ -150,7 +150,7 @@ func TestUpdateEmptyBody(t *testing.T) {
 func TestUpdateNotFound(t *testing.T) {
 	svc, _ := newTestService()
 	name := "X"
-	_, err := svc.Update(context.Background(), "665f1c2d3e4f5a6b7c8d9e0f", &name, nil)
+	_, err := svc.Update(context.Background(), "665f1c2d3e4f5a6b7c8d9e0f", application.UpdateUserInput{Name: &name})
 	if !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound, got %v", err)
 	}
@@ -186,7 +186,7 @@ func TestGetInvalidID(t *testing.T) {
 func TestUpdateInvalidID(t *testing.T) {
 	svc, _ := newTestService()
 	name := "X"
-	_, err := svc.Update(context.Background(), "not-an-objectid", &name, nil)
+	_, err := svc.Update(context.Background(), "not-an-objectid", application.UpdateUserInput{Name: &name})
 	if !errors.Is(err, domain.ErrInvalidID) {
 		t.Fatalf("expected ErrInvalidID, got %v", err)
 	}
@@ -204,7 +204,7 @@ func TestUpdateInvalidEmail(t *testing.T) {
 	seeded := repo.Seed("Ada", "ada@example.com", "h:x")
 
 	email := "not-an-email"
-	_, err := svc.Update(context.Background(), seeded.ID, nil, &email)
+	_, err := svc.Update(context.Background(), seeded.ID, application.UpdateUserInput{Email: &email})
 	var verr domain.ValidationError
 	if !errors.As(err, &verr) {
 		t.Fatalf("expected ValidationError, got %v", err)
@@ -238,7 +238,7 @@ func TestUpdateUnexpectedRepoErrorPropagates(t *testing.T) {
 	repo.FailFindByEmail(boom)
 
 	email := "new@example.com"
-	_, err := svc.Update(context.Background(), seeded.ID, nil, &email)
+	_, err := svc.Update(context.Background(), seeded.ID, application.UpdateUserInput{Email: &email})
 	if !errors.Is(err, boom) {
 		t.Fatalf("expected repo error to propagate, got %v", err)
 	}

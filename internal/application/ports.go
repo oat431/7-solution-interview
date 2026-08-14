@@ -24,6 +24,12 @@ type StoredUser struct {
 	PasswordHash string
 }
 
+// UpdateUserInput is a partial update: nil fields are left unchanged.
+type UpdateUserInput struct {
+	Name  *string
+	Email *string
+}
+
 // UserRepository is the driven port for user persistence, implemented by
 // the MongoDB adapter and by test fakes.
 type UserRepository interface {
@@ -31,7 +37,7 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id string) (domain.User, error)
 	FindByEmail(ctx context.Context, email string) (StoredUser, error)
 	List(ctx context.Context) ([]domain.User, error)
-	Update(ctx context.Context, id string, name, email *string) (domain.User, error)
+	Update(ctx context.Context, id string, in UpdateUserInput) (domain.User, error)
 	Delete(ctx context.Context, id string) error
 	Count(ctx context.Context) (int64, error)
 }
@@ -49,6 +55,6 @@ type TokenClaims struct {
 
 // TokenManager is the driven port for JWT issuing/verification.
 type TokenManager interface {
-	Issue(ctx context.Context, subject, email string, ttl time.Duration) (string, error)
+	Issue(ctx context.Context, claims TokenClaims) (token string, expiresIn time.Duration, err error)
 	Verify(token string) (TokenClaims, error)
 }

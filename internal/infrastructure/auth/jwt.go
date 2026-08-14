@@ -14,13 +14,15 @@ import (
 const tokenIssuer = "sevensolutions-user-api"
 
 // JWTManager implements application.TokenManager with HMAC-SHA256 (HS256).
+// The TTL is signing policy, so it lives here rather than at call sites.
 type JWTManager struct {
 	secret []byte
+	ttl    time.Duration
 	issuer string
 }
 
-func NewJWTManager(secret []byte) *JWTManager {
-	return &JWTManager{secret: secret, issuer: tokenIssuer}
+func NewJWTManager(secret []byte, ttl time.Duration) *JWTManager {
+	return &JWTManager{secret: secret, ttl: ttl, issuer: tokenIssuer}
 }
 
 type claims struct {
@@ -28,24 +30,26 @@ type claims struct {
 	jwt.RegisteredClaims
 }
 
-// Issue signs a token with the given subject (user ID), email and TTL.
-func (m *JWTManager) Issue(_ context.Context, subject, email string, ttl time.Duration) (string, error) {
+func (m *JWTManager) Issue(_ context.Context, c application.TokenClaims) (string, time.Duration, error) {
 	now := time.Now()
-	c := claims{
-		Email: email,
+	claims := claims{
+		Email: c.Email,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   subject,
+			Subject:   c.Subject,
 			Issuer:    m.issuer,
 			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(m.ttl)),
 		},
 	}
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, c).SignedString(m.secret)
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(m.secret)
+	if err != nil {
+		return "", 0, err
+	}
+	return token, m.ttl, nil
 }
 
 // Verify parses and validates a token. The algorithm is pinned to HS256 via
-// WithValidMethods — a token signed with any other alg is rejected, and
-// exp/iat validation happens automatically through ParseWithClaims.
+// WithValidMethods — a token signed with any other alg is rejected.
 func (m *JWTManager) Verify(token string) (application.TokenClaims, error) {
 	parsed, err := jwt.ParseWithClaims(token, &claims{}, func(t *jwt.Token) (any, error) {
 		return m.secret, nil

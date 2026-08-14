@@ -47,12 +47,16 @@ func (s *Server) GetUser(ctx context.Context, req *userservicev1.GetUserRequest)
 	return toProto(user), nil
 }
 
+// rfc3339Millis formats timestamps with millisecond precision, as expected
+// by the gRPC contract (022 §5).
+const rfc3339Millis = "2006-01-02T15:04:05.000Z07:00"
+
 func toProto(u domain.User) *userservicev1.User {
 	return &userservicev1.User{
 		Id:        u.ID,
 		Name:      u.Name,
 		Email:     u.Email,
-		CreatedAt: u.CreatedAt.Format("2006-01-02T15:04:05.000Z07:00"),
+		CreatedAt: u.CreatedAt.Format(rfc3339Millis),
 	}
 }
 

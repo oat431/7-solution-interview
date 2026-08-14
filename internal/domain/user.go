@@ -52,6 +52,11 @@ func ValidateName(name string) error {
 	return nil
 }
 
+// NormalizeEmail returns the canonical form used for storage and lookup.
+func NormalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
+
 // ValidateEmail checks the email rules, returning a ValidationError or nil.
 // Callers normalize (trim + lowercase) before validating.
 func ValidateEmail(email string) error {

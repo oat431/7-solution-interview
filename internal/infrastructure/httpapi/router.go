@@ -1,7 +1,6 @@
 package httpapi
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -32,7 +31,7 @@ func NewRouter(log *slog.Logger, users *application.UserService, auth *applicati
 	return logRequest(log, mux)
 }
 
-// requireAuth validates the Bearer token and stores claims in the request context.
+// requireAuth validates the Bearer token before passing the request on.
 func requireAuth(auth *application.AuthService, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, ok := bearerToken(r)
@@ -44,8 +43,7 @@ func requireAuth(auth *application.AuthService, next http.Handler) http.Handler 
 			return
 		}
 
-		claims, err := auth.VerifyToken(token)
-		if err != nil {
+		if _, err := auth.VerifyToken(token); err != nil {
 			writeJSON(w, http.StatusUnauthorized, errorEnvelope{Error: errorBody{
 				Code:    "UNAUTHORIZED",
 				Message: "Invalid or expired token",
@@ -53,17 +51,8 @@ func requireAuth(auth *application.AuthService, next http.Handler) http.Handler 
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), claimsKey{}, claims)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r)
 	})
-}
-
-type claimsKey struct{}
-
-// ClaimsFrom returns the authenticated claims, or false when absent.
-func ClaimsFrom(ctx context.Context) (application.TokenClaims, bool) {
-	c, ok := ctx.Value(claimsKey{}).(application.TokenClaims)
-	return c, ok
 }
 
 func bearerToken(r *http.Request) (string, bool) {

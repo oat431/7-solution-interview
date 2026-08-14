@@ -22,7 +22,7 @@ func NewUserService(repo UserRepository, hasher PasswordHasher) *UserService {
 // Create normalizes the email, validates, hashes the password and persists.
 func (s *UserService) Create(ctx context.Context, in domain.NewUserInput) (domain.User, error) {
 	in.Name = strings.TrimSpace(in.Name)
-	in.Email = strings.ToLower(strings.TrimSpace(in.Email))
+	in.Email = domain.NormalizeEmail(in.Email)
 
 	if err := in.Validate(); err != nil {
 		return domain.User{}, err
@@ -54,43 +54,26 @@ func (s *UserService) List(ctx context.Context) ([]domain.User, error) {
 
 // Update applies a partial update of name/email; the password is not
 // mutable here.
-func (s *UserService) Update(ctx context.Context, id string, name, email *string) (domain.User, error) {
+func (s *UserService) Update(ctx context.Context, id string, in UpdateUserInput) (domain.User, error) {
 	if !domain.IsValidID(id) {
 		return domain.User{}, domain.ErrInvalidID
 	}
-	if name == nil && email == nil {
+	if in.Name == nil && in.Email == nil {
 		return domain.User{}, domain.ValidationError{
 			{Field: "body", Message: "at least one of name or email is required"},
 		}
 	}
-
-	if name != nil {
-		trimmed := strings.TrimSpace(*name)
-		if err := domain.ValidateName(trimmed); err != nil {
-			return domain.User{}, err
-		}
-		*name = trimmed
-	}
-
-	if email != nil {
-		normalized := strings.ToLower(strings.TrimSpace(*email))
-		if err := domain.ValidateEmail(normalized); err != nil {
-			return domain.User{}, err
-		}
-		*email = normalized
-
-		// Pre-check uniqueness (friendly 409); unique index remains the
-		// race-proof backstop (AC-001f / AC-006e).
-		existing, err := s.repo.FindByEmail(ctx, normalized)
-		if err == nil && existing.ID != id {
-			return domain.User{}, domain.ErrEmailExists
-		}
-		if err != nil && err != domain.ErrNotFound {
+	if in.Name != nil {
+		if err := s.validateName(in.Name); err != nil {
 			return domain.User{}, err
 		}
 	}
-
-	return s.repo.Update(ctx, id, name, email)
+	if in.Email != nil {
+		if err := s.validateEmailAvailable(ctx, in.Email, id); err != nil {
+			return domain.User{}, err
+		}
+	}
+	return s.repo.Update(ctx, id, in)
 }
 
 func (s *UserService) Delete(ctx context.Context, id string) error {
@@ -98,4 +81,32 @@ func (s *UserService) Delete(ctx context.Context, id string) error {
 		return domain.ErrInvalidID
 	}
 	return s.repo.Delete(ctx, id)
+}
+
+func (s *UserService) validateName(name *string) error {
+	trimmed := strings.TrimSpace(*name)
+	if err := domain.ValidateName(trimmed); err != nil {
+		return err
+	}
+	*name = trimmed
+	return nil
+}
+
+func (s *UserService) validateEmailAvailable(ctx context.Context, email *string, id string) error {
+	normalized := domain.NormalizeEmail(*email)
+	if err := domain.ValidateEmail(normalized); err != nil {
+		return err
+	}
+	*email = normalized
+
+	// Pre-check uniqueness (friendly 409); unique index remains the
+	// race-proof backstop (AC-001f / AC-006e).
+	existing, err := s.repo.FindByEmail(ctx, normalized)
+	if err == nil && existing.ID != id {
+		return domain.ErrEmailExists
+	}
+	if err != nil && err != domain.ErrNotFound {
+		return err
+	}
+	return nil
 }

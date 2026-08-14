@@ -81,15 +81,7 @@ func (r *UserRepository) FindByID(ctx context.Context, id string) (domain.User, 
 	if err != nil {
 		return domain.User{}, domain.ErrInvalidID
 	}
-
-	var doc userDoc
-	if err := r.coll.FindOne(ctx, bson.M{"_id": oid}).Decode(&doc); err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return domain.User{}, domain.ErrNotFound
-		}
-		return domain.User{}, err
-	}
-	return doc.toUser(), nil
+	return r.getByObjectID(ctx, oid)
 }
 
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (application.StoredUser, error) {
@@ -121,18 +113,18 @@ func (r *UserRepository) List(ctx context.Context) ([]domain.User, error) {
 	return users, cursor.Err()
 }
 
-func (r *UserRepository) Update(ctx context.Context, id string, name, email *string) (domain.User, error) {
+func (r *UserRepository) Update(ctx context.Context, id string, in application.UpdateUserInput) (domain.User, error) {
 	oid, err := parseID(id)
 	if err != nil {
 		return domain.User{}, domain.ErrInvalidID
 	}
 
 	set := bson.M{}
-	if name != nil {
-		set["name"] = *name
+	if in.Name != nil {
+		set["name"] = *in.Name
 	}
-	if email != nil {
-		set["email"] = *email
+	if in.Email != nil {
+		set["email"] = *in.Email
 	}
 
 	res, err := r.coll.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$set": set})
@@ -145,12 +137,7 @@ func (r *UserRepository) Update(ctx context.Context, id string, name, email *str
 	if res.MatchedCount == 0 {
 		return domain.User{}, domain.ErrNotFound
 	}
-
-	var doc userDoc
-	if err := r.coll.FindOne(ctx, bson.M{"_id": oid}).Decode(&doc); err != nil {
-		return domain.User{}, err
-	}
-	return doc.toUser(), nil
+	return r.getByObjectID(ctx, oid)
 }
 
 func (r *UserRepository) Delete(ctx context.Context, id string) error {
@@ -179,6 +166,17 @@ func parseID(id string) (bson.ObjectID, error) {
 		return bson.NilObjectID, err
 	}
 	return oid, nil
+}
+
+func (r *UserRepository) getByObjectID(ctx context.Context, oid bson.ObjectID) (domain.User, error) {
+	var doc userDoc
+	if err := r.coll.FindOne(ctx, bson.M{"_id": oid}).Decode(&doc); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return domain.User{}, domain.ErrNotFound
+		}
+		return domain.User{}, err
+	}
+	return doc.toUser(), nil
 }
 
 func (d userDoc) toUser() domain.User {

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -30,7 +31,12 @@ import (
 	"github.com/oat431/7-solution-interview/internal/worker"
 )
 
-const shutdownTimeout = 10 * time.Second
+const (
+	mongoConnectTimeout    = 10 * time.Second
+	mongoDisconnectTimeout = 5 * time.Second
+	shutdownTimeout        = 10 * time.Second
+	grpcStopTimeout        = 5 * time.Second
+)
 
 func main() {
 	cfg, err := config.Load()
@@ -42,68 +48,25 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	client, err := mongo.Connect(options.Client().ApplyURI(cfg.MongoURI))
+	client, err := connectMongo(ctx, cfg.MongoURI)
 	if err != nil {
-		logg.Error("mongo connect failed", "error", err)
-		os.Exit(1)
+		fatal(logg, "mongo connect failed", err)
 	}
-
-	connectCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	if err := client.Ping(connectCtx, readpref.Primary()); err != nil {
-		cancel()
-		logg.Error("mongo ping failed", "error", err)
-		os.Exit(1)
-	}
-	cancel()
-
 	repo := mongodb.NewUserRepository(client.Database(cfg.DBName))
-	idxCtx, cancelIdx := context.WithTimeout(ctx, 10*time.Second)
-	if err := repo.EnsureIndexes(idxCtx); err != nil {
-		cancelIdx()
-		logg.Error("ensure indexes failed", "error", err)
-		os.Exit(1)
+	if err := ensureIndexes(ctx, repo); err != nil {
+		fatal(logg, "ensure indexes failed", err)
 	}
-	cancelIdx()
 
 	hasher := auth.NewBcryptHasher()
-	tokens := auth.NewJWTManager([]byte(cfg.JWTSecret))
+	tokens := auth.NewJWTManager([]byte(cfg.JWTSecret), cfg.TokenTTL)
 	users := application.NewUserService(repo, hasher)
-	authSvc := application.NewAuthService(repo, hasher, tokens, cfg.TokenTTL)
+	authSvc := application.NewAuthService(repo, hasher, tokens)
 
-	worker := worker.NewUserCountWorker(repo, logg)
-	go worker.Run(ctx, cfg.WorkerInterval)
-
-	srv := &http.Server{
-		Addr:              ":" + cfg.HTTPPort,
-		Handler:           httpapi.NewRouter(logg, users, authSvc),
-		ReadHeaderTimeout: 5 * time.Second,
-	}
+	go worker.NewUserCountWorker(repo, logg).Run(ctx, cfg.WorkerInterval)
 
 	serverErr := make(chan error, 1)
-	go func() {
-		logg.Info("http server listening", "port", cfg.HTTPPort)
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			serverErr <- err
-		}
-	}()
-
-	// Reflection lets clients like grpcurl discover the service without a
-	// local proto file.
-	grpcSrv := grpc.NewServer(grpc.UnaryInterceptor(grpcapi.UnaryAuthInterceptor(authSvc)))
-	userservicev1.RegisterUserServiceServer(grpcSrv, grpcapi.NewServer(users))
-	reflection.Register(grpcSrv)
-
-	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
-	if err != nil {
-		logg.Error("grpc listen failed", "error", err)
-		os.Exit(1)
-	}
-	go func() {
-		logg.Info("grpc server listening", "port", cfg.GRPCPort)
-		if serveErr := grpcSrv.Serve(lis); serveErr != nil {
-			serverErr <- serveErr
-		}
-	}()
+	httpSrv := serveHTTP(logg, httpapi.NewRouter(logg, users, authSvc), cfg.HTTPPort, serverErr)
+	grpcSrv := serveGRPC(logg, users, authSvc, cfg.GRPCPort, serverErr)
 
 	logg.Info("service started",
 		"db", cfg.DBName,
@@ -114,16 +77,77 @@ func main() {
 
 	select {
 	case err := <-serverErr:
-		logg.Error("http server failed", "error", err)
-		stop()
+		logg.Error("server failed", "error", err)
 	case <-ctx.Done():
 		logg.Info("shutdown signal received")
 	}
+	stop()
 
-	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer cancelShutdown()
+	shutdown(logg, httpSrv, grpcSrv, client)
+}
 
-	if err := srv.Shutdown(shutdownCtx); err != nil {
+func connectMongo(ctx context.Context, uri string) (*mongo.Client, error) {
+	client, err := mongo.Connect(options.Client().ApplyURI(uri))
+	if err != nil {
+		return nil, err
+	}
+
+	pingCtx, cancel := context.WithTimeout(ctx, mongoConnectTimeout)
+	defer cancel()
+	if err := client.Ping(pingCtx, readpref.Primary()); err != nil {
+		_ = client.Disconnect(context.Background())
+		return nil, err
+	}
+	return client, nil
+}
+
+func ensureIndexes(ctx context.Context, repo *mongodb.UserRepository) error {
+	idxCtx, cancel := context.WithTimeout(ctx, mongoConnectTimeout)
+	defer cancel()
+	return repo.EnsureIndexes(idxCtx)
+}
+
+func serveHTTP(logg *slog.Logger, handler http.Handler, port string, serverErr chan<- error) *http.Server {
+	srv := &http.Server{
+		Addr:              ":" + port,
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+	go func() {
+		logg.Info("http server listening", "port", port)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
+		}
+	}()
+	return srv
+}
+
+func serveGRPC(logg *slog.Logger, users *application.UserService, authSvc *application.AuthService, port string, serverErr chan<- error) *grpc.Server {
+	// Reflection lets clients like grpcurl discover the service without a
+	// local proto file.
+	grpcSrv := grpc.NewServer(grpc.UnaryInterceptor(grpcapi.UnaryAuthInterceptor(authSvc)))
+	userservicev1.RegisterUserServiceServer(grpcSrv, grpcapi.NewServer(users))
+	reflection.Register(grpcSrv)
+
+	lis, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		serverErr <- err
+		return grpcSrv
+	}
+	go func() {
+		logg.Info("grpc server listening", "port", port)
+		if serveErr := grpcSrv.Serve(lis); serveErr != nil {
+			serverErr <- serveErr
+		}
+	}()
+	return grpcSrv
+}
+
+func shutdown(logg *slog.Logger, httpSrv *http.Server, grpcSrv *grpc.Server, client *mongo.Client) {
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if err := httpSrv.Shutdown(ctx); err != nil {
 		logg.Error("http shutdown failed", "error", err)
 	}
 
@@ -135,19 +159,21 @@ func main() {
 	}()
 	select {
 	case <-grpcStopped:
-	case <-time.After(5 * time.Second):
+	case <-time.After(grpcStopTimeout):
 		logg.Warn("grpc graceful stop timed out, forcing stop")
 		grpcSrv.Stop()
 	}
 
-	// ctx cancellation also stops the worker goroutine.
-	stop()
-
-	disconnectCtx, cancelDisc := context.WithTimeout(context.Background(), 5*time.Second)
+	disconnectCtx, cancelDisc := context.WithTimeout(context.Background(), mongoDisconnectTimeout)
 	defer cancelDisc()
 	if err := client.Disconnect(disconnectCtx); err != nil {
 		logg.Error("mongo disconnect failed", "error", err)
 	}
 
 	logg.Info("shutdown complete")
+}
+
+func fatal(logg *slog.Logger, msg string, err error) {
+	logg.Error(msg, "error", err)
+	os.Exit(1)
 }

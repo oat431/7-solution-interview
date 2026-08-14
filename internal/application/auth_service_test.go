@@ -13,8 +13,8 @@ import (
 
 type fakeTokens struct{}
 
-func (fakeTokens) Issue(_ context.Context, subject, email string, ttl time.Duration) (string, error) {
-	return subject + "|" + email + "|" + ttl.String(), nil
+func (fakeTokens) Issue(_ context.Context, c application.TokenClaims) (string, time.Duration, error) {
+	return c.Subject + "|" + c.Email, time.Hour, nil
 }
 
 func (fakeTokens) Verify(token string) (application.TokenClaims, error) {
@@ -28,7 +28,7 @@ func newTestAuth() (*application.AuthService, *application.UserService, *testuti
 	repo := testutil.NewFakeUserRepository()
 	hasher := testutil.FakeHasher{}
 	users := application.NewUserService(repo, hasher)
-	auth := application.NewAuthService(repo, hasher, fakeTokens{}, time.Hour)
+	auth := application.NewAuthService(repo, hasher, fakeTokens{})
 	return auth, users, repo
 }
 

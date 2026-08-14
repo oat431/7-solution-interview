@@ -6,31 +6,43 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/oat431/7-solution-interview/internal/application"
 )
 
 const testSecret = "0123456789abcdef0123456789abcdef" // 32 bytes
 
-func TestIssueAndVerifyRoundtrip(t *testing.T) {
-	m := NewJWTManager([]byte(testSecret))
+var testClaims = application.TokenClaims{Subject: "user-123", Email: "ada@example.com"}
 
-	token, err := m.Issue(context.Background(), "user-123", "ada@example.com", time.Hour)
+func newManager(t *testing.T, ttl time.Duration) *JWTManager {
+	t.Helper()
+	return NewJWTManager([]byte(testSecret), ttl)
+}
+
+func TestIssueAndVerifyRoundtrip(t *testing.T) {
+	m := newManager(t, time.Hour)
+
+	token, expiresIn, err := m.Issue(context.Background(), testClaims)
 	if err != nil {
 		t.Fatalf("issue: %v", err)
+	}
+	if expiresIn != time.Hour {
+		t.Fatalf("expected expiresIn 1h, got %v", expiresIn)
 	}
 
 	claims, err := m.Verify(token)
 	if err != nil {
 		t.Fatalf("verify: %v", err)
 	}
-	if claims.Subject != "user-123" || claims.Email != "ada@example.com" {
+	if claims != testClaims {
 		t.Fatalf("unexpected claims: %+v", claims)
 	}
 }
 
 func TestVerifyExpiredToken(t *testing.T) {
-	m := NewJWTManager([]byte(testSecret))
+	m := newManager(t, -time.Minute)
 
-	token, err := m.Issue(context.Background(), "user-123", "ada@example.com", -time.Minute)
+	token, _, err := m.Issue(context.Background(), testClaims)
 	if err != nil {
 		t.Fatalf("issue: %v", err)
 	}
@@ -41,8 +53,8 @@ func TestVerifyExpiredToken(t *testing.T) {
 }
 
 func TestVerifyTamperedToken(t *testing.T) {
-	m := NewJWTManager([]byte(testSecret))
-	token, err := m.Issue(context.Background(), "user-123", "ada@example.com", time.Hour)
+	m := newManager(t, time.Hour)
+	token, _, err := m.Issue(context.Background(), testClaims)
 	if err != nil {
 		t.Fatalf("issue: %v", err)
 	}
@@ -62,10 +74,10 @@ func TestVerifyTamperedToken(t *testing.T) {
 }
 
 func TestVerifyTokenSignedWithDifferentSecret(t *testing.T) {
-	m := NewJWTManager([]byte(testSecret))
-	other := NewJWTManager([]byte("another-secret-0123456789abcdef!!"))
+	m := newManager(t, time.Hour)
+	other := NewJWTManager([]byte("another-secret-0123456789abcdef!!"), time.Hour)
 
-	token, err := other.Issue(context.Background(), "user-123", "ada@example.com", time.Hour)
+	token, _, err := other.Issue(context.Background(), testClaims)
 	if err != nil {
 		t.Fatalf("issue: %v", err)
 	}
@@ -76,7 +88,7 @@ func TestVerifyTokenSignedWithDifferentSecret(t *testing.T) {
 
 // TestVerifyRejectsNoneAlgorithm ensures alg=none tokens are rejected.
 func TestVerifyRejectsNoneAlgorithm(t *testing.T) {
-	m := NewJWTManager([]byte(testSecret))
+	m := newManager(t, time.Hour)
 
 	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"none","typ":"JWT"}`))
 	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"user-123","exp":4102444800}`))
@@ -88,9 +100,8 @@ func TestVerifyRejectsNoneAlgorithm(t *testing.T) {
 }
 
 func TestVerifyMissingSubject(t *testing.T) {
-	m := NewJWTManager([]byte(testSecret))
-	// Issue a token whose subject is empty by direct signing.
-	token, err := m.Issue(context.Background(), "", "ada@example.com", time.Hour)
+	m := newManager(t, time.Hour)
+	token, _, err := m.Issue(context.Background(), application.TokenClaims{Subject: "", Email: "ada@example.com"})
 	if err != nil {
 		t.Fatalf("issue: %v", err)
 	}

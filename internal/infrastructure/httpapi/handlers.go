@@ -55,21 +55,7 @@ func NewAuthHandler(users *application.UserService, auth *application.AuthServic
 
 // Register creates a user and returns 201 without a token.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req registerRequest
-	if !decodeJSON(w, r, &req) {
-		return
-	}
-
-	user, err := h.users.Create(r.Context(), domain.NewUserInput{
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
-	})
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusCreated, user)
+	createUser(w, r, h.users)
 }
 
 // Login exchanges credentials for a JWT.
@@ -102,21 +88,7 @@ func NewUserHandler(users *application.UserService) *UserHandler {
 
 // Create mirrors register behind JWT auth (A7: one use case, two routes).
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var req registerRequest
-	if !decodeJSON(w, r, &req) {
-		return
-	}
-
-	user, err := h.users.Create(r.Context(), domain.NewUserInput{
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
-	})
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusCreated, user)
+	createUser(w, r, h.users)
 }
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +115,10 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.users.Update(r.Context(), r.PathValue("id"), req.Name, req.Email)
+	user, err := h.users.Update(r.Context(), r.PathValue("id"), application.UpdateUserInput{
+		Name:  req.Name,
+		Email: req.Email,
+	})
 	if err != nil {
 		writeError(w, err)
 		return
@@ -162,4 +137,23 @@ func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // Health serves the liveness probe used by docker healthchecks.
 func Health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, healthResponse{Status: "ok"})
+}
+
+// createUser is the shared path behind POST /auth/register and POST /users.
+func createUser(w http.ResponseWriter, r *http.Request, users *application.UserService) {
+	var req registerRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	user, err := users.Create(r.Context(), domain.NewUserInput{
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, user)
 }
