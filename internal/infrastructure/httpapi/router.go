@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/oat431/backend-challenge/internal/application"
+	"github.com/oat431/7-solution-interview/internal/application"
 )
 
 // NewRouter wires all routes on a single ServeMux using Go 1.22+ method and

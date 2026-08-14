@@ -1,4 +1,4 @@
-module github.com/oat431/backend-challenge
+module github.com/oat431/7-solution-interview
 
 go 1.25.3
 

@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/oat431/backend-challenge/internal/domain"
+	"github.com/oat431/7-solution-interview/internal/domain"
 )
 
 // CreateUserRecord is the persistence input for creating a user. The domain

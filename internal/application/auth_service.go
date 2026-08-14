@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oat431/backend-challenge/internal/domain"
+	"github.com/oat431/7-solution-interview/internal/domain"
 )
 
 // LoginResult is a successful login: the user plus a fresh JWT.

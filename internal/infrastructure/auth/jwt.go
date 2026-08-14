@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/oat431/backend-challenge/internal/application"
+	"github.com/oat431/7-solution-interview/internal/application"
 )
 
 const tokenIssuer = "sevensolutions-user-api"

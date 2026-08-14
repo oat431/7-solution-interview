@@ -20,15 +20,15 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/oat431/backend-challenge/gen/userservice/v1"
-	"github.com/oat431/backend-challenge/internal/application"
-	"github.com/oat431/backend-challenge/internal/infrastructure/auth"
-	"github.com/oat431/backend-challenge/internal/infrastructure/config"
-	"github.com/oat431/backend-challenge/internal/infrastructure/grpcapi"
-	"github.com/oat431/backend-challenge/internal/infrastructure/httpapi"
-	"github.com/oat431/backend-challenge/internal/infrastructure/logger"
-	"github.com/oat431/backend-challenge/internal/infrastructure/mongodb"
-	"github.com/oat431/backend-challenge/internal/worker"
+	"github.com/oat431/7-solution-interview/gen/userservice/v1"
+	"github.com/oat431/7-solution-interview/internal/application"
+	"github.com/oat431/7-solution-interview/internal/infrastructure/auth"
+	"github.com/oat431/7-solution-interview/internal/infrastructure/config"
+	"github.com/oat431/7-solution-interview/internal/infrastructure/grpcapi"
+	"github.com/oat431/7-solution-interview/internal/infrastructure/httpapi"
+	"github.com/oat431/7-solution-interview/internal/infrastructure/logger"
+	"github.com/oat431/7-solution-interview/internal/infrastructure/mongodb"
+	"github.com/oat431/7-solution-interview/internal/worker"
 )
 
 const shutdownTimeout = 10 * time.Second

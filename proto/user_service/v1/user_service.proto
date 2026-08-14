@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package userservice.v1;
 
-option go_package = "github.com/oat431/backend-challenge/gen/userservice/v1;userservicev1";
+option go_package = "github.com/oat431/7-solution-interview/gen/userservice/v1;userservicev1";
 
 // User is the wire representation of a user. No password material is ever
 // included in gRPC responses.

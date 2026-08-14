@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/oat431/backend-challenge/internal/domain"
+	"github.com/oat431/7-solution-interview/internal/domain"
 )
 
 const maxBodyBytes = 1 << 20 // 1 MB

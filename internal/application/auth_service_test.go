@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oat431/backend-challenge/internal/application"
-	"github.com/oat431/backend-challenge/internal/domain"
-	"github.com/oat431/backend-challenge/testutil"
+	"github.com/oat431/7-solution-interview/internal/application"
+	"github.com/oat431/7-solution-interview/internal/domain"
+	"github.com/oat431/7-solution-interview/testutil"
 )
 
 type fakeTokens struct{}

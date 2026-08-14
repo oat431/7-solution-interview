@@ -215,7 +215,7 @@ const file_proto_user_service_v1_user_service_proto_rawDesc = "" +
 	"\vUserService\x12E\n" +
 	"\n" +
 	"CreateUser\x12!.userservice.v1.CreateUserRequest\x1a\x14.userservice.v1.User\x12?\n" +
-	"\aGetUser\x12\x1e.userservice.v1.GetUserRequest\x1a\x14.userservice.v1.UserBFZDgithub.com/oat431/backend-challenge/gen/userservice/v1;userservicev1b\x06proto3"
+	"\aGetUser\x12\x1e.userservice.v1.GetUserRequest\x1a\x14.userservice.v1.UserBIZGgithub.com/oat431/7-solution-interview/gen/userservice/v1;userservicev1b\x06proto3"
 
 var (
 	file_proto_user_service_v1_user_service_proto_rawDescOnce sync.Once

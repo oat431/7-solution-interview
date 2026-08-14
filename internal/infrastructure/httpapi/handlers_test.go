@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/oat431/backend-challenge/internal/application"
-	"github.com/oat431/backend-challenge/internal/infrastructure/auth"
-	"github.com/oat431/backend-challenge/internal/infrastructure/httpapi"
-	"github.com/oat431/backend-challenge/testutil"
+	"github.com/oat431/7-solution-interview/internal/application"
+	"github.com/oat431/7-solution-interview/internal/infrastructure/auth"
+	"github.com/oat431/7-solution-interview/internal/infrastructure/httpapi"
+	"github.com/oat431/7-solution-interview/testutil"
 )
 
 const testSecret = "0123456789abcdef0123456789abcdef"

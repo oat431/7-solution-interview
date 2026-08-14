@@ -13,9 +13,9 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	userservicev1 "github.com/oat431/backend-challenge/gen/userservice/v1"
-	"github.com/oat431/backend-challenge/internal/application"
-	"github.com/oat431/backend-challenge/internal/domain"
+	userservicev1 "github.com/oat431/7-solution-interview/gen/userservice/v1"
+	"github.com/oat431/7-solution-interview/internal/application"
+	"github.com/oat431/7-solution-interview/internal/domain"
 )
 
 // Server implements userservicev1.UserServiceServer using the application

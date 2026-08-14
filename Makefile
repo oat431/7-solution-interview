@@ -37,6 +37,6 @@ PROTOC ?= tools/protoc/bin/protoc
 
 gen-proto:
 	rm -rf gen
-	$(PROTOC) --go_out=. --go_opt=module=github.com/oat431/backend-challenge \
-	       --go-grpc_out=. --go-grpc_opt=module=github.com/oat431/backend-challenge \
+	$(PROTOC) --go_out=. --go_opt=module=github.com/oat431/7-solution-interview \
+	       --go-grpc_out=. --go-grpc_opt=module=github.com/oat431/7-solution-interview \
 	       proto/user_service/v1/user_service.proto

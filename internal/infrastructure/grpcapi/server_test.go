@@ -13,11 +13,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
-	userservicev1 "github.com/oat431/backend-challenge/gen/userservice/v1"
-	"github.com/oat431/backend-challenge/internal/application"
-	"github.com/oat431/backend-challenge/internal/infrastructure/auth"
-	"github.com/oat431/backend-challenge/internal/infrastructure/grpcapi"
-	"github.com/oat431/backend-challenge/testutil"
+	userservicev1 "github.com/oat431/7-solution-interview/gen/userservice/v1"
+	"github.com/oat431/7-solution-interview/internal/application"
+	"github.com/oat431/7-solution-interview/internal/infrastructure/auth"
+	"github.com/oat431/7-solution-interview/internal/infrastructure/grpcapi"
+	"github.com/oat431/7-solution-interview/testutil"
 )
 
 const (
