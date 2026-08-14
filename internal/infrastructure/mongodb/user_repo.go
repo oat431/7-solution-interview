@@ -20,8 +20,7 @@ const (
 	emailIndexName  = "ux_users_email"
 )
 
-// userDoc is the persistence shape. The domain entity carries JSON tags only;
-// BSON mapping lives here, at the adapter boundary.
+// userDoc is the persistence shape; BSON mapping lives at the adapter boundary.
 type userDoc struct {
 	ID           bson.ObjectID `bson:"_id,omitempty"`
 	Name         string        `bson:"name"`

@@ -22,14 +22,12 @@ func timeSinceMS(start time.Time) int64 {
 	return time.Since(start).Milliseconds()
 }
 
-// writeJSON encodes v with the given status.
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-// errorEnvelope matches the contract in 022 §3.
 type errorEnvelope struct {
 	Error errorBody `json:"error"`
 }
@@ -68,8 +66,8 @@ func mapError(err error) (status int, code, msg string, details []domain.FieldEr
 	}
 }
 
-// decodeJSON reads a JSON body, enforcing size limit and rejecting unknown
-// fields. On failure it writes the error response and returns false.
+// decodeJSON enforces the body size limit, rejects unknown fields, and
+// writes the error response returning false on failure.
 func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 	r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
 	dec := json.NewDecoder(r.Body)
@@ -84,8 +82,7 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 	return true
 }
 
-// logRequest is the logging middleware (challenge requirement 5): method,
-// path, status and execution time on every request, via structured slog.
+// logRequest logs method, path, status and duration for every request.
 func logRequest(log *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := timeNow()

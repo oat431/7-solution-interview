@@ -11,8 +11,7 @@ import (
 	"time"
 )
 
-// User is the core entity of the service. The password is never stored on
-// this struct — only the bcrypt hash, and only inside the persistence layer.
+// User is the core entity. Password material never lives on it.
 type User struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
@@ -27,7 +26,6 @@ type NewUserInput struct {
 	Password string
 }
 
-// Validation limits.
 const (
 	MaxNameLength     = 100
 	MinPasswordLength = 8
@@ -66,8 +64,7 @@ func ValidateEmail(email string) error {
 	return nil
 }
 
-// Validate checks business rules for user creation/update input and returns
-// a ValidationError listing every failed field, or nil.
+// Validate returns a ValidationError listing every rule violation, or nil.
 func (in NewUserInput) Validate() error {
 	var errs ValidationError
 

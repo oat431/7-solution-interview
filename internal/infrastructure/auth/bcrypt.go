@@ -22,9 +22,7 @@ func (h *BcryptHasher) Hash(password string) (string, error) {
 	return string(b), nil
 }
 
-// Compare returns an error on mismatch; the caller maps it to
-// domain.ErrInvalidCredentials so that wrong-password and wrong-email are
-// indistinguishable to clients.
+// Compare returns an error on mismatch.
 func (h *BcryptHasher) Compare(hash, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }

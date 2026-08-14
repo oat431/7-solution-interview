@@ -15,10 +15,8 @@ type LoginResult struct {
 	ExpiresIn time.Duration
 }
 
-// AuthService handles login and token verification. Registration is
-// intentionally NOT here: both the public register endpoint and the protected
-// create-user endpoint call UserService.Create — one use case, two adapters
-// (assumption A7).
+// AuthService handles login and token verification. Registration lives in
+// UserService.Create, shared by the public and protected routes (A7).
 type AuthService struct {
 	repo   UserRepository
 	hasher PasswordHasher
@@ -30,8 +28,8 @@ func NewAuthService(repo UserRepository, hasher PasswordHasher, tokens TokenMana
 	return &AuthService{repo: repo, hasher: hasher, tokens: tokens, ttl: ttl}
 }
 
-// Login checks credentials and issues a JWT. Wrong email and wrong password
-// return the same error — no user enumeration (AC-002c/d).
+// Login returns the same error for wrong email and wrong password — no user
+// enumeration (AC-002c/d).
 func (s *AuthService) Login(ctx context.Context, email, password string) (LoginResult, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 
@@ -55,8 +53,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (LoginR
 	return LoginResult{User: stored.User, Token: token, ExpiresIn: s.ttl}, nil
 }
 
-// VerifyToken validates a JWT and returns its claims. Shared by the REST
-// auth middleware and the gRPC interceptor — one verifier, one policy.
+// VerifyToken is shared by the REST middleware and the gRPC interceptor.
 func (s *AuthService) VerifyToken(token string) (TokenClaims, error) {
 	return s.tokens.Verify(token)
 }

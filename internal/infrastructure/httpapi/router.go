@@ -9,9 +9,8 @@ import (
 	"github.com/oat431/7-solution-interview/internal/application"
 )
 
-// NewRouter wires all routes on a single ServeMux using Go 1.22+ method and
-// path patterns. Protected routes are wrapped by the JWT middleware; the
-// logging middleware wraps everything.
+// NewRouter wires all routes on one ServeMux; protected routes get the JWT
+// middleware, everything gets logging.
 func NewRouter(log *slog.Logger, users *application.UserService, auth *application.AuthService) http.Handler {
 	ah := NewAuthHandler(users, auth)
 	uh := NewUserHandler(users)
@@ -33,8 +32,7 @@ func NewRouter(log *slog.Logger, users *application.UserService, auth *applicati
 	return logRequest(log, mux)
 }
 
-// requireAuth validates the Bearer token and stores claims in the request
-// context. Failure is a uniform 401 UNAUTHORIZED (AC-002b, AC-004d, ...).
+// requireAuth validates the Bearer token and stores claims in the request context.
 func requireAuth(auth *application.AuthService, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, ok := bearerToken(r)

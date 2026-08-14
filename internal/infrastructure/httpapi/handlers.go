@@ -8,8 +8,6 @@ import (
 	"github.com/oat431/7-solution-interview/internal/domain"
 )
 
-// ---- DTOs ----
-
 type registerRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
@@ -46,8 +44,6 @@ type healthResponse struct {
 	Status string `json:"status"`
 }
 
-// ---- Auth handlers ----
-
 type AuthHandler struct {
 	users *application.UserService
 	auth  *application.AuthService
@@ -57,7 +53,7 @@ func NewAuthHandler(users *application.UserService, auth *application.AuthServic
 	return &AuthHandler{users: users, auth: auth}
 }
 
-// Register is public: creates a user and returns 201 without a token.
+// Register creates a user and returns 201 without a token.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
 	if !decodeJSON(w, r, &req) {
@@ -76,7 +72,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, user)
 }
 
-// Login is public: exchanges credentials for a JWT.
+// Login exchanges credentials for a JWT.
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if !decodeJSON(w, r, &req) {
@@ -96,8 +92,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ---- User handlers (JWT-protected) ----
-
 type UserHandler struct {
 	users *application.UserService
 }
@@ -106,8 +100,7 @@ func NewUserHandler(users *application.UserService) *UserHandler {
 	return &UserHandler{users: users}
 }
 
-// createUser is the shared create path for POST /users and POST /auth/register
-// (assumption A7: one use case, two routes).
+// Create mirrors register behind JWT auth (A7: one use case, two routes).
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
 	if !decodeJSON(w, r, &req) {
@@ -166,7 +159,7 @@ func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Health is a public liveness probe used by docker healthchecks.
+// Health serves the liveness probe used by docker healthchecks.
 func Health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, healthResponse{Status: "ok"})
 }

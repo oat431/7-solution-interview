@@ -1,6 +1,5 @@
-// Command api is the composition root of the user management service: it
-// loads configuration, wires the hexagonal layers, starts the HTTP server
-// and the user-count worker, and shuts everything down gracefully.
+// Command api wires configuration, adapters, servers and the worker, and
+// handles graceful shutdown.
 package main
 
 import (
@@ -43,7 +42,6 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// ---- driven adapter: MongoDB ----
 	client, err := mongo.Connect(options.Client().ApplyURI(cfg.MongoURI))
 	if err != nil {
 		logg.Error("mongo connect failed", "error", err)
@@ -67,17 +65,14 @@ func main() {
 	}
 	cancelIdx()
 
-	// ---- application core ----
 	hasher := auth.NewBcryptHasher()
 	tokens := auth.NewJWTManager([]byte(cfg.JWTSecret))
 	users := application.NewUserService(repo, hasher)
 	authSvc := application.NewAuthService(repo, hasher, tokens, cfg.TokenTTL)
 
-	// ---- background worker (challenge requirement 6) ----
 	worker := worker.NewUserCountWorker(repo, logg)
 	go worker.Run(ctx, cfg.WorkerInterval)
 
-	// ---- driving adapter: HTTP ----
 	srv := &http.Server{
 		Addr:              ":" + cfg.HTTPPort,
 		Handler:           httpapi.NewRouter(logg, users, authSvc),
@@ -92,9 +87,8 @@ func main() {
 		}
 	}()
 
-	// ---- driving adapter: gRPC (bonus) ----
-	// Reflection is enabled so clients like grpcurl can discover the service
-	// without a local proto file — zero-friction reviewer experience.
+	// Reflection lets clients like grpcurl discover the service without a
+	// local proto file.
 	grpcSrv := grpc.NewServer(grpc.UnaryInterceptor(grpcapi.UnaryAuthInterceptor(authSvc)))
 	userservicev1.RegisterUserServiceServer(grpcSrv, grpcapi.NewServer(users))
 	reflection.Register(grpcSrv)
@@ -118,7 +112,6 @@ func main() {
 		"worker_interval", cfg.WorkerInterval.String(),
 	)
 
-	// ---- graceful shutdown ----
 	select {
 	case err := <-serverErr:
 		logg.Error("http server failed", "error", err)

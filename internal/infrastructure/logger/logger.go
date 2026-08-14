@@ -6,8 +6,7 @@ import (
 	"os"
 )
 
-// New returns a JSON slog.Logger writing to stdout, the idiomatic Go
-// structured-logging setup with zero third-party dependencies.
+// New returns a JSON slog.Logger writing to stdout.
 func New() *slog.Logger {
 	return slog.New(slog.NewJSONHandler(os.Stdout, nil))
 }

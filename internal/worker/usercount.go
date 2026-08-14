@@ -1,5 +1,4 @@
-// Package worker contains background jobs. The user-count worker logs the
-// total number of users on a fixed interval (challenge requirement 6).
+// Package worker contains background jobs.
 package worker
 
 import (
@@ -9,7 +8,6 @@ import (
 )
 
 // Counter is the narrow dependency the worker needs from persistence.
-// The interval is injectable so tests don't sleep 10 seconds (AC-009c).
 type Counter interface {
 	Count(ctx context.Context) (int64, error)
 }

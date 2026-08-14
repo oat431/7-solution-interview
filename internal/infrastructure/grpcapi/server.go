@@ -1,6 +1,4 @@
-// Package grpcapi is the gRPC driving adapter: it re-exposes the same
-// application-layer use cases as the REST adapter (ADR-04), secured by a
-// JWT metadata interceptor.
+// Package grpcapi is the gRPC driving adapter, secured by a JWT metadata interceptor.
 package grpcapi
 
 import (
@@ -75,8 +73,8 @@ func mapGRPCError(err error) error {
 	}
 }
 
-// UnaryAuthInterceptor enforces JWT authentication from gRPC metadata. It
-// shares the same verifier as the REST middleware (AC-010c/d).
+// UnaryAuthInterceptor enforces JWT auth from gRPC metadata, sharing the
+// verifier with the REST middleware.
 func UnaryAuthInterceptor(auth *application.AuthService) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		md, ok := metadata.FromIncomingContext(ctx)

@@ -10,25 +10,22 @@ import (
 	"github.com/oat431/7-solution-interview/internal/domain"
 )
 
-// CreateUserRecord is the persistence input for creating a user. The domain
-// entity deliberately carries no password material; the hash travels only
-// between the application layer and the persistence adapter.
+// CreateUserRecord is the persistence input for creating a user.
 type CreateUserRecord struct {
 	Name         string
 	Email        string
 	PasswordHash string
 }
 
-// StoredUser is a user plus its password hash, as returned by the repository
-// when credentials need to be checked (login). The hash never reaches API
-// responses — adapters strip it.
+// StoredUser is a user with its password hash, returned only when
+// credentials must be checked.
 type StoredUser struct {
 	domain.User
 	PasswordHash string
 }
 
-// UserRepository is the driven port for user persistence (hexagonal).
-// Implemented by the MongoDB adapter and by test fakes.
+// UserRepository is the driven port for user persistence, implemented by
+// the MongoDB adapter and by test fakes.
 type UserRepository interface {
 	Create(ctx context.Context, rec CreateUserRecord) (domain.User, error)
 	FindByID(ctx context.Context, id string) (domain.User, error)
@@ -45,7 +42,6 @@ type PasswordHasher interface {
 	Compare(hash, password string) error
 }
 
-// TokenClaims is what token verification yields.
 type TokenClaims struct {
 	Subject string // user ID
 	Email   string

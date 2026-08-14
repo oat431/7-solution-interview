@@ -1,6 +1,5 @@
-// Package config loads and validates environment configuration at startup.
-// All values fail fast: a misconfigured service refuses to boot instead of
-// failing at request time.
+// Package config loads and validates environment configuration at startup
+// (fail fast: a misconfigured service refuses to boot).
 package config
 
 import (
