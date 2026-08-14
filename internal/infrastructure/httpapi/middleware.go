@@ -10,25 +10,17 @@ import (
 	"github.com/oat431/7-solution-interview/internal/application"
 )
 
-// timeNow and timeSinceMS are indirection points that make middleware
-// duration assertions deterministic in tests.
-var timeNow = time.Now
-
-func timeSinceMS(start time.Time) int64 {
-	return time.Since(start).Milliseconds()
-}
-
 // logRequest logs method, path, status and duration for every request.
 func logRequest(log *slog.Logger) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		start := timeNow()
+		start := time.Now()
 		err := c.Next()
 
 		attrs := []any{
 			"method", c.Method(),
 			"path", c.Path(),
 			"status", c.Response().StatusCode(),
-			"duration_ms", timeSinceMS(start),
+			"duration_ms", time.Since(start).Milliseconds(),
 		}
 		if rid := c.GetRespHeader(fiber.HeaderXRequestID); rid != "" {
 			attrs = append(attrs, "request_id", rid)

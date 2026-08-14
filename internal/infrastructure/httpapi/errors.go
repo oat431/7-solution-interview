@@ -94,15 +94,10 @@ func mapError(err error) (status int, code, msg string, details []domain.FieldEr
 // decodeJSON parses the body with unknown fields rejected — the password
 // field cannot be smuggled through an update (AC-006g).
 func decodeJSON(c fiber.Ctx, dst any) error {
-	if err := disallowUnknownFields(c.Body(), dst); err != nil {
+	dec := json.NewDecoder(bytes.NewReader(c.Body()))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(dst); err != nil {
 		return badRequest("Malformed request body")
 	}
 	return nil
-}
-
-// disallowUnknownFields is the Fiber body decoder.
-func disallowUnknownFields(data []byte, v any) error {
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
-	return dec.Decode(v)
 }

@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"log/slog"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/recover"
@@ -12,6 +13,16 @@ import (
 
 const maxBodyBytes = 1 << 20 // 1 MB
 
+// Server timeouts bound slow or idle clients (ACT-D1); Fiber defaults are
+// unlimited. fasthttp starts WriteTimeout once request headers are read,
+// so WriteTimeout must also cover handler work (bcrypt ~50–100ms at cost
+// 10, Mongo round-trips) — hence larger than ReadTimeout.
+const (
+	readTimeout  = 10 * time.Second
+	writeTimeout = 15 * time.Second
+	idleTimeout  = 60 * time.Second
+)
+
 // NewApp wires all routes on one Fiber app; protected routes get the JWT
 // middleware, everything gets request-id, logging and panic recovery.
 func NewApp(log *slog.Logger, users *application.UserService, auth *application.AuthService) *fiber.App {
@@ -19,6 +30,9 @@ func NewApp(log *slog.Logger, users *application.UserService, auth *application.
 		AppName:      "7-solution-interview-api",
 		Immutable:    true,
 		BodyLimit:    maxBodyBytes,
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
+		IdleTimeout:  idleTimeout,
 		ErrorHandler: errorHandler,
 	})
 

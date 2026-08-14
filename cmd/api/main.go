@@ -33,8 +33,14 @@ import (
 const (
 	mongoConnectTimeout    = 10 * time.Second
 	mongoDisconnectTimeout = 5 * time.Second
-	shutdownTimeout        = 10 * time.Second
-	grpcStopTimeout        = 5 * time.Second
+	// Pool bounds replace the driver defaults (max 100 / min 0) so a
+	// misbehaving caller cannot open unbounded connections, and an
+	// unreachable Mongo fails fast instead of hanging 30s (ACT-D2).
+	mongoMaxPoolSize            = 50
+	mongoMinPoolSize            = 5
+	mongoServerSelectionTimeout = 5 * time.Second
+	shutdownTimeout             = 10 * time.Second
+	grpcStopTimeout             = 5 * time.Second
 )
 
 func main() {
@@ -86,7 +92,13 @@ func main() {
 }
 
 func connectMongo(ctx context.Context, uri string) (*mongo.Client, error) {
-	client, err := mongo.Connect(options.Client().ApplyURI(uri))
+	opts := options.Client().
+		ApplyURI(uri).
+		SetMaxPoolSize(mongoMaxPoolSize).
+		SetMinPoolSize(mongoMinPoolSize).
+		SetServerSelectionTimeout(mongoServerSelectionTimeout)
+
+	client, err := mongo.Connect(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +121,10 @@ func ensureIndexes(ctx context.Context, repo *mongodb.UserRepository) error {
 func serveFiber(logg *slog.Logger, app *fiber.App, port string, serverErr chan<- error) *fiber.App {
 	go func() {
 		logg.Info("http server listening", "port", port)
-		if err := app.Listen(":" + port); err != nil {
+		// Fiber listens on tcp4 by default; "tcp" restores the dual-stack
+		// listener the pre-Fiber net/http server had, so in-container
+		// localhost (::1) healthchecks can reach it.
+		if err := app.Listen(":"+port, fiber.ListenConfig{ListenerNetwork: fiber.NetworkTCP}); err != nil {
 			serverErr <- err
 		}
 	}()
