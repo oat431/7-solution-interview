@@ -31,6 +31,7 @@ tags: [spec-index, interview, golang, mongodb, jwt, hexagonal]
 | 031 | README Guide | `03_construction/031_README_developer_guide.md` | The deliverable itself: setup, JWT guide, samples, assumptions |
 | 041 | Test Plan | `04_testing/041_test_plan.md` | Unit strategy, fakes, coverage targets |
 | 072 | Polish Handoff | `07_pm/072_MM_handoff_polish.md` | MTG-H01: PO → Dev/QA/Security action items |
+| 073 | Dev → QA Handoff | `07_pm/073_MM_dev_to_qa_handoff.md` | MTG-D01: polish complete, defect evidence (413 envelope), QA-relevant fixes |
 
 ## Suggested Reading Order (for implementation)
 

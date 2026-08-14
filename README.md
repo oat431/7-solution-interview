@@ -147,6 +147,7 @@ Coverage across the core (domain/application/http/grpc/worker) is 83–100%. The
 | 10 | gRPC on a separate port with a JWT metadata interceptor | "Optionally secure with token metadata" → secured |
 | 11 | Unique email index created programmatically at startup (idempotent) | Race-safe duplicate rejection; no manual setup step |
 | 12 | ID validity checked in the domain layer | Identical behavior across repository implementations |
+| 13 | Validation rules live in the domain layer (plain Go), not in Fiber's `StructValidator`/`go-playground/validator` | One rule set shared by REST **and** gRPC (Fiber's hook only fires on HTTP binds); produces the exact field-level error envelope the API spec defines — adopting the library would mean a tag→message translation layer for zero behavior change |
 
 ## License
 
