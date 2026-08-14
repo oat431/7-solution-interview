@@ -33,25 +33,25 @@ standard_ref:
 
 | # | Criterion | Verified |
 |---|-----------|----------|
-| 1 | All 7 challenge requirements demoable (register, login→JWT, create, get, list, update, delete, logging middleware, 10s worker) | ☐ |
-| 2 | Bonus 1 — Dockerfile + compose up with healthchecks | ☐ |
-| 3 | Bonus 2 — Mongo behind Go interface (repository port) | ☐ |
-| 4 | Bonus 3 — input validation (required fields, email format, password rules) | ☐ |
-| 5 | Bonus 4 — graceful shutdown via `context.Context` + signals | ☐ |
-| 6 | Bonus 5 — gRPC `.proto` + server + token metadata interceptor | ☐ |
-| 7 | Bonus 6 — hexagonal layers (domain/application/infrastructure) | ☐ |
+| 1 | All 7 challenge requirements demoable (register, login→JWT, create, get, list, update, delete, logging middleware, 10s worker) | ✅ |
+| 2 | Bonus 1 — Dockerfile + compose up with healthchecks | ✅ |
+| 3 | Bonus 2 — Mongo behind Go interface (repository port) | ✅ |
+| 4 | Bonus 3 — input validation (required fields, email format, password rules) | ✅ |
+| 5 | Bonus 4 — graceful shutdown via `context.Context` + signals | ✅ |
+| 6 | Bonus 5 — gRPC `.proto` + server + token metadata interceptor | ✅ |
+| 7 | Bonus 6 — hexagonal layers (domain/application/infrastructure) | ✅ |
 
 ### Quality
 
 | # | Criterion | Verified |
 |---|-----------|----------|
-| 8 | `go test ./... -race` green | ☐ |
-| 9 | Aggregate coverage ≥80% (domain/application/http/grpc/worker) | ☐ |
-| 10 | `go vet ./...` + `gofmt -l .` empty | ☐ |
-| 11 | README (031) present with: setup, JWT guide, sample requests/responses, assumptions & design decisions | ☐ |
-| 12 | Smoke script (041 §6) passes against compose stack | ☐ |
-| 13 | `.env.example` only — no real secrets; `.gitignore` covers `.env` | ☐ |
-| 14 | Repo pushed with clean history; no build artifacts / generated code committed unless deliberate | ☐ |
+| 8 | `go test ./... -race` green | ✅ |
+| 9 | Aggregate coverage ≥80% (domain/application/http/grpc/worker) | ✅ 83–100% |
+| 10 | `go vet ./...` + `gofmt -l .` empty | ✅ |
+| 11 | README (031) present with: setup, JWT guide, sample requests/responses, assumptions & design decisions | ✅ |
+| 12 | Smoke script (041 §6) passes against compose stack | ✅ 13/13 |
+| 13 | `.env.example` only — no real secrets; `.gitignore` covers `.env` | ✅ |
+| 14 | Repo pushed with clean history; no build artifacts / generated code committed unless deliberate | ☐ push pending (remote TBD) |
 
 ## 3. Quality Gates (automated where possible)
 

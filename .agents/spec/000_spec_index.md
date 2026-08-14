@@ -61,6 +61,6 @@ tags: [spec-index, interview, golang, mongodb, jwt, hexagonal]
 
 - [x] Review of challenge README complete
 - [x] Bonus scope committed (all 6)
-- [ ] Spec package written (this folder)
-- [ ] Implementation
-- [ ] Task 2 spec (after Task 1 ships)
+- [x] Spec package written (this folder)
+- [x] Implementation — REST API, tests, Docker, gRPC, verified live (compose + smoke 13/13 + grpcurl)
+- [ ] Task 2 spec (lottery design proposal)
