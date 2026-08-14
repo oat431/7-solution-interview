@@ -1,0 +1,22 @@
+# Binaries
+bin/
+coverage.out
+
+# Env & secrets
+.env
+*.pem
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go workspace (module vendoring off)
+vendor/
+
+# Tools (local protoc download for gRPC bonus)
+tools/
