@@ -1,4 +1,4 @@
-# User Management API
+# 7-Solutions Backend Challenge
 
 RESTful user management API in Go with MongoDB persistence and JWT authentication, built for the 7-Solutions backend challenge — with hexagonal architecture, gRPC, Docker, input validation and graceful shutdown.
 
