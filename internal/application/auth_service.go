@@ -26,17 +26,25 @@ func NewAuthService(repo UserRepository, hasher PasswordHasher, tokens TokenMana
 	return &AuthService{repo: repo, hasher: hasher, tokens: tokens}
 }
 
+// dummyPasswordHash is a real bcrypt hash (cost 10) of a throwaway string.
+// When the email is unknown we compare against it so the unknown-email and
+// wrong-password paths take comparable time — otherwise login doubles as an
+// email-enumeration timing oracle (ACT-S2).
+const dummyPasswordHash = "$2a$10$ReM7nZzKQqg7h3/GXbPKJetusfQauRkpfBLV4n0VqzXV5gaCzeTHW"
+
 // Login returns the same error for wrong email and wrong password — no user
 // enumeration (AC-002c/d).
 func (s *AuthService) Login(ctx context.Context, email, password string) (LoginResult, error) {
 	email = domain.NormalizeEmail(email)
 
 	stored, err := s.repo.FindByEmail(ctx, email)
-	if err == domain.ErrNotFound {
-		return LoginResult{}, domain.ErrInvalidCredentials
-	}
 	if err != nil {
-		return LoginResult{}, err
+		if err != domain.ErrNotFound {
+			return LoginResult{}, err
+		}
+		// Flatten timing: burn one bcrypt compare before failing.
+		_ = s.hasher.Compare(dummyPasswordHash, password)
+		return LoginResult{}, domain.ErrInvalidCredentials
 	}
 
 	if err := s.hasher.Compare(stored.PasswordHash, password); err != nil {

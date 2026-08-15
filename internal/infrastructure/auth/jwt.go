@@ -49,11 +49,16 @@ func (m *JWTManager) Issue(_ context.Context, c application.TokenClaims) (string
 }
 
 // Verify parses and validates a token. The algorithm is pinned to HS256 via
-// WithValidMethods — a token signed with any other alg is rejected.
+// WithValidMethods — a token signed with any other alg is rejected. The
+// issuer is validated (defense against cross-service token confusion if the
+// secret is ever shared) and an exp claim is required (ACT-S4).
 func (m *JWTManager) Verify(token string) (application.TokenClaims, error) {
 	parsed, err := jwt.ParseWithClaims(token, &claims{}, func(t *jwt.Token) (any, error) {
 		return m.secret, nil
-	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+		jwt.WithIssuer(tokenIssuer),
+		jwt.WithExpirationRequired(),
+	)
 	if err != nil {
 		return application.TokenClaims{}, fmt.Errorf("invalid token: %w", err)
 	}

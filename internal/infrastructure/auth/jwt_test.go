@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/oat431/7-solution-interview/internal/application"
 )
 
@@ -107,5 +108,29 @@ func TestVerifyMissingSubject(t *testing.T) {
 	}
 	if _, err := m.Verify(token); err == nil {
 		t.Fatal("expected error for token without subject")
+	}
+}
+
+// TestVerifyRejectsWrongIssuer ensures a token signed with the same secret
+// but a different issuer is rejected (ACT-S4 cross-service hardening).
+func TestVerifyRejectsWrongIssuer(t *testing.T) {
+	m := newManager(t, time.Hour)
+
+	foreign := jwt.NewWithClaims(jwt.SigningMethodHS256, claims{
+		Email: "ada@example.com",
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "user-123",
+			Issuer:    "another-service",
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		},
+	})
+	token, err := foreign.SignedString([]byte(testSecret))
+	if err != nil {
+		t.Fatalf("sign: %v", err)
+	}
+
+	if _, err := m.Verify(token); err == nil {
+		t.Fatal("expected error for token with wrong issuer")
 	}
 }

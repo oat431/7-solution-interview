@@ -1,0 +1,24 @@
+# Secrets — never in the build context (DEF-003)
+.env
+.env.*
+*.pem
+
+# VCS history — bloat + leak surface in builder layers
+.git
+.gitignore
+
+# Project docs / agents — not needed to build or run
+.agents
+
+# Local tooling & artifacts
+tools/
+bin/
+coverage.out
+.qa_scratch
+
+# IDE / OS noise
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

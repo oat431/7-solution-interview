@@ -148,6 +148,10 @@ Coverage across the core (domain/application/http/grpc/worker) is 83–100%. The
 | 11 | Unique email index created programmatically at startup (idempotent) | Race-safe duplicate rejection; no manual setup step |
 | 12 | ID validity checked in the domain layer | Identical behavior across repository implementations |
 | 13 | Validation rules live in the domain layer (plain Go), not in Fiber's `StructValidator`/`go-playground/validator` | One rule set shared by REST **and** gRPC (Fiber's hook only fires on HTTP binds); produces the exact field-level error envelope the API spec defines — adopting the library would mean a tag→message translation layer for zero behavior change |
+| 14 | **No rate limiting** on public endpoints (`/auth/register`, `/auth/login`) | Out of scope for the challenge; production hardening: reverse-proxy/gateway rate limiting (e.g. nginx `limit_req`, cloud WAF) to blunt credential stuffing and enumeration |
+| 15 | **Plain HTTP locally**; no TLS in the service itself | By design for local dev; production: TLS terminates at a reverse proxy (the service binds container-internal ports), secrets travel via env/secret manager |
+| 16 | **Compose Mongo runs without authentication** on the compose network | Dev convenience only; production: enable MongoDB auth (`--auth`), dedicated user per app, TLS to Mongo, no host port exposure (or bind to loopback) |
+| 17 | **gRPC server reflection enabled** (`grpcurl` discoverability) | JWT-gated like all RPCs, but reflection discloses service schemas; disable (`reflection.Register` removed) in production if not needed |
 
 ## License
 

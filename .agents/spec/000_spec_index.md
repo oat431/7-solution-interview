@@ -36,6 +36,8 @@ tags: [spec-index, interview, golang, mongodb, jwt, hexagonal]
 | 073 | Dev → QA Handoff | `07_pm/073_MM_dev_to_qa_handoff.md` | MTG-D01: polish complete, defect evidence (413 envelope), QA-relevant fixes |
 | 074 | QA Polish Complete | `07_pm/074_MM_qa_polish_complete.md` | MTG-Q01: QA → PO, 46/46 AC traced, 3 defects, 2 PO decisions |
 | 075 | QA → Security Handoff | `07_pm/075_MM_qa_to_security_handoff.md` | MTG-S01: security evidence pack, DEF-003 proven live, ACT-S status |
+| 061 | Security Test Report | `06_security/061_security_test_report.md` | SecEng: full security review, 4 findings fixed + verified, ACT-S1..S6 closed |
+| 076 | Security → PO Handoff | `07_pm/076_MM_security_to_po_handoff.md` | MTG-S02: security sign-off, residual-risk list, QA decisions unblocked |
 
 ## Suggested Reading Order (for implementation)
 

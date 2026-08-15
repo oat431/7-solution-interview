@@ -96,3 +96,31 @@ func TestLoginUnexpectedRepoErrorPropagates(t *testing.T) {
 		t.Fatalf("expected repo error to propagate, got %v", err)
 	}
 }
+
+// countingHasher records how many times Compare was invoked.
+type countingHasher struct {
+	compares int
+}
+
+func (c *countingHasher) Hash(password string) (string, error) { return "h:" + password, nil }
+func (c *countingHasher) Compare(hash, password string) error {
+	c.compares++
+	return nil
+}
+
+// TestLoginUnknownEmailRunsDummyCompare guards the ACT-S2 timing fix: an
+// unknown email must still burn one Compare call so the response time does
+// not reveal whether the email exists.
+func TestLoginUnknownEmailRunsDummyCompare(t *testing.T) {
+	hasher := &countingHasher{}
+	repo := testutil.NewFakeUserRepository()
+	auth := application.NewAuthService(repo, hasher, fakeTokens{})
+
+	_, err := auth.Login(context.Background(), "ghost@example.com", "whatever")
+	if !errors.Is(err, domain.ErrInvalidCredentials) {
+		t.Fatalf("expected ErrInvalidCredentials, got %v", err)
+	}
+	if hasher.compares != 1 {
+		t.Fatalf("expected exactly 1 dummy compare on unknown email, got %d", hasher.compares)
+	}
+}

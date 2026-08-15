@@ -148,6 +148,8 @@ coverage.out
 
 **Update 2026-08-15 (075 security handoff):** escalated from inspection to demonstrated fact — `docker build --target builder` then `ls /app` shows `/app/.env` (191 bytes, real local secret), `/app/.git` (2.0M), `.agents/` and `tools/` inside the builder image. Final runtime image verified clean (binary only, non-root uid 10001). See [[075_MM_qa_to_security_handoff]].
 
+**Update 2026-08-15 (076 security sign-off):** ✅ **Fixed and verified by SecEng.** `.dockerignore` added (`.env`, `.env.*`, `*.pem`, `.git`, `.agents`, `tools/`, `bin/`, `coverage.out`, IDE/OS noise). Rebuild + inspection: `/app` contains source/build files only — `.env`, `.git`, `.agents`, `tools/` all absent from the builder image; runtime image rebuilt, healthy, non-root uid 10001; smoke 20/20. See [[061_security_test_report]] SEC-01.
+
 ---
 
 ## 6. Defect Metrics (this pass)
