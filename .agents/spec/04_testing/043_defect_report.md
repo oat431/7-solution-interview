@@ -146,6 +146,8 @@ coverage.out
 
 `docker build` the builder target and `docker history` / `docker save | tar -tvf` must not list `.env`; compose stack must still build and pass smoke 20/20.
 
+**Update 2026-08-15 (075 security handoff):** escalated from inspection to demonstrated fact — `docker build --target builder` then `ls /app` shows `/app/.env` (191 bytes, real local secret), `/app/.git` (2.0M), `.agents/` and `tools/` inside the builder image. Final runtime image verified clean (binary only, non-root uid 10001). See [[075_MM_qa_to_security_handoff]].
+
 ---
 
 ## 6. Defect Metrics (this pass)
