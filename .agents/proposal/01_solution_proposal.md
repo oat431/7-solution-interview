@@ -58,18 +58,18 @@ Every pattern is 6 chars over {digit, `*`}. A pattern with `k` specified digits 
 ```mermaid
 flowchart TB
     subgraph Clients["Clients"]
-        USER([Users searching<br>& claiming tickets])
+        USER(["Users searching & claiming tickets"])
     end
 
     subgraph Service["Search & Allocation Service"]
-        API[API Layer<br>pattern -> result]
-        ALLOC[Allocator<br>Lua: SINTER + SPOP + lease]
-        REAP[Reaper<br>expired lease -> re-inject]
+        API["API Layer — pattern to result"]
+        ALLOC["Allocator — Lua: SINTER + SPOP + lease"]
+        REAP["Reaper — expired lease to re-inject"]
     end
 
     subgraph Hot["Hot Pool — Valkey/Redis"]
         POOL[(Ticket pool<br>instances by pattern position)]
-        IDX[(Positional index sets<br>idx:pos{i}:d — 60 sets)]
+        IDX["Positional index sets — 60 sets (idx pos + digit)"]
         LEASE[(Lease index<br>ZSET score = expiry ts)]
     end
 
