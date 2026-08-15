@@ -129,7 +129,7 @@ scripts/smoke.sh             # end-to-end smoke test
 make test    # go test -race -cover ./...
 ```
 
-Coverage across the core (domain/application/http/grpc/worker) is 83–100%. The MongoDB adapter itself is excluded from unit coverage by design: it is a thin driver wrapper verified by the smoke test against a real Mongo, while all business logic is tested against the in-memory fake behind the repository port. HTTP tests run in-process through Fiber's `app.Test` — no server needed.
+Coverage across the core (domain/application/http/grpc/worker) is 83–100%. The MongoDB adapter itself is excluded from unit coverage by design: it is a thin driver wrapper covered instead by a build-tagged integration suite that runs against a real MongoDB — `go test -tags integration -race ./internal/infrastructure/mongodb/` (all 7 repository operations, unique-index duplicate mapping, invalid-ID mapping, index idempotency, and a 16-goroutine same-email registration race). All business logic is tested against the in-memory fake behind the repository port. HTTP tests run in-process through Fiber's `app.Test` — no server needed.
 
 ## Assumptions & Design Decisions
 

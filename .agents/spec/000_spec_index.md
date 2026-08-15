@@ -30,8 +30,11 @@ tags: [spec-index, interview, golang, mongodb, jwt, hexagonal]
 | 025 | Architecture | `02_design/025_software_architecture_document.md` | Hexagonal layers, ports/adapters, package tree |
 | 031 | README Guide | `03_construction/031_README_developer_guide.md` | The deliverable itself: setup, JWT guide, samples, assumptions |
 | 041 | Test Plan | `04_testing/041_test_plan.md` | Unit strategy, fakes, coverage targets |
+| 042 | Test Cases | `04_testing/042_test_cases.md` | QA-added cases (integration, race, smoke ext.) + 46-AC traceability |
+| 043 | Defect Report | `04_testing/043_defect_report.md` | DEF-001..003 (413 code, 404 code, dockerignore) |
 | 072 | Polish Handoff | `07_pm/072_MM_handoff_polish.md` | MTG-H01: PO → Dev/QA/Security action items |
 | 073 | Dev → QA Handoff | `07_pm/073_MM_dev_to_qa_handoff.md` | MTG-D01: polish complete, defect evidence (413 envelope), QA-relevant fixes |
+| 074 | QA Polish Complete | `07_pm/074_MM_qa_polish_complete.md` | MTG-Q01: QA → PO, 46/46 AC traced, 3 defects, 2 PO decisions |
 
 ## Suggested Reading Order (for implementation)
 

@@ -353,18 +353,62 @@ func TestListUsers(t *testing.T) {
 	}
 }
 
+// AC-005b: an empty database lists as {"data":[], "meta":{"count":0}} —
+// never {"data":null}. The token is issued directly so no user is created.
+func TestListUsersEmpty(t *testing.T) {
+	e := newTestEnv()
+	tk, _, err := e.tokens.Issue(context.Background(), application.TokenClaims{Subject: "seed", Email: "seed@example.com"})
+	if err != nil {
+		t.Fatalf("issue token: %v", err)
+	}
+
+	code, raw := e.do(t, http.MethodGet, "/api/v1/users", "", tk)
+	if code != http.StatusOK {
+		t.Fatalf("expected 200, got %d (%s)", code, raw)
+	}
+	if strings.Contains(raw, `"data":null`) {
+		t.Fatalf("empty list must serialize as [], not null: %s", raw)
+	}
+	m := decodeMap(t, raw)
+	data := m["data"].([]any)
+	if len(data) != 0 {
+		t.Fatalf("expected empty data, got %d", len(data))
+	}
+	meta := m["meta"].(map[string]any)
+	if meta["count"].(float64) != 0 {
+		t.Fatalf("expected count 0, got %v", meta["count"])
+	}
+}
+
 func TestUpdateUserNameOnly(t *testing.T) {
 	e := newTestEnv()
 	created := e.register(t, "Ada", "ada@example.com", "s3cret-pass")
-	token := e.login(t, "ada@example.com", "s3cret-pass")
+	tok := e.login(t, "ada@example.com", "s3cret-pass")
 
 	code, raw := e.do(t, http.MethodPut, "/api/v1/users/"+created["id"].(string),
-		`{"name":"Ada Byron"}`, token)
+		`{"name":"Ada Byron"}`, tok)
 	if code != http.StatusOK {
 		t.Fatalf("expected 200, got %d (%s)", code, raw)
 	}
 	m := decodeMap(t, raw)
 	if m["name"] != "Ada Byron" || m["email"] != "ada@example.com" {
+		t.Fatalf("unexpected body: %s", raw)
+	}
+}
+
+// AC-006b: email-only partial update succeeds; name stays untouched.
+func TestUpdateUserEmailOnly(t *testing.T) {
+	e := newTestEnv()
+	created := e.register(t, "Ada", "ada@example.com", "s3cret-pass")
+	tk := e.login(t, "ada@example.com", "s3cret-pass")
+
+	code, raw := e.do(t, http.MethodPut, "/api/v1/users/"+created["id"].(string),
+		`{"email":"ada.byron@example.com"}`, tk)
+	if code != http.StatusOK {
+		t.Fatalf("expected 200, got %d (%s)", code, raw)
+	}
+	m := decodeMap(t, raw)
+	if m["email"] != "ada.byron@example.com" || m["name"] != "Ada" {
 		t.Fatalf("unexpected body: %s", raw)
 	}
 }
