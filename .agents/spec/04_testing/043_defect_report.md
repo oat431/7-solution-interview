@@ -29,9 +29,9 @@ Defects found during the QA polish pass (072 ACT-Q1..Q6). All defects were repro
 
 | ID | Title | Severity | Module | Status | Assigned | Reported | Fixed |
 |----|-------|---------|--------|--------|---------|---------|-------|
-| DEF-001 | 413 body-limit response uses `INTERNAL_ERROR` code | 🟢 Medium | httpapi (error mapping) | 🆕 New — `needs-po-decision` | PO (DEC-D01) → Dev | 2026-08-15 | — |
-| DEF-002 | Catch-all 404 uses `NOT_FOUND` code not defined in 022 §3 | ⚪ Low | httpapi (error mapping) | 🆕 New — `needs-po-decision` | PO | 2026-08-15 | — |
-| DEF-003 | No `.dockerignore` — `.env` enters Docker build context | 🟢 Medium | Docker/build | 🆕 New | Dev + SecEng (ACT-S3) | 2026-08-15 | — |
+| DEF-001 | 413 body-limit response uses `INTERNAL_ERROR` code | 🟢 Medium | httpapi (error mapping) | ✅ Resolved — PO decision Option A | PO (DEC-PO-01) → Dev | 2026-08-15 | 2026-08-15 |
+| DEF-002 | Catch-all 404 uses `NOT_FOUND` code not defined in 022 §3 | ⚪ Low | httpapi (error mapping) | ✅ Resolved — PO decision: add `NOT_FOUND` row | PO (DEC-PO-02) | 2026-08-15 | 2026-08-15 |
+| DEF-003 | No `.dockerignore` — `.env` enters Docker build context | 🟢 Medium | Docker/build | ✅ Resolved — fixed + verified by SecEng (061 SEC-01) | Dev + SecEng (ACT-S3) | 2026-08-15 | 2026-08-15 |
 
 ---
 
@@ -161,7 +161,7 @@ coverage.out
 | 🟡 High | 0 | |
 | 🟢 Medium | 2 | DEF-001, DEF-003 |
 | ⚪ Low | 1 | DEF-002 |
-| Awaiting PO decision | 2 | DEF-001 (DEC-D01), DEF-002 |
+| Awaiting PO decision | 0 | all resolved 2026-08-15 (see 077_MM_po_review) |
 | Regressions introduced by QA pass | 0 | unit 7/7, smoke 20/20, integration 10/10 |
 
 ## 7. Severity Definitions

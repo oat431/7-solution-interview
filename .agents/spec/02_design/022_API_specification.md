@@ -77,8 +77,10 @@ Content-Type: application/json
 | `UNAUTHORIZED` | 401 | Missing / malformed / expired / wrong-alg token |
 | `INVALID_CREDENTIALS` | 401 | Login failure (wrong email or password — identical body) |
 | `USER_NOT_FOUND` | 404 | Id not in DB |
-| `EMAIL_ALREADY_EXISTS` | 409 | Duplicate email (pre-check + unique index) |
+| `NOT_FOUND` | 404 | Unknown route (catch-all) |
 | `METHOD_NOT_ALLOWED` | 405 | Wrong verb on known path |
+| `EMAIL_ALREADY_EXISTS` | 409 | Duplicate email (pre-check + unique index) |
+| `REQUEST_TOO_LARGE` | 413 | Body exceeds the configured size limit |
 | `INTERNAL_ERROR` | 500 | Unhandled server error (message deliberately generic) |
 
 ## 4. REST Endpoints
@@ -196,7 +198,9 @@ service UserService {
 | User count worker | Ticker, default 10s (`WORKER_INTERVAL` env), logs `total_users=N`; stops on shutdown context |
 | Graceful shutdown | `signal.NotifyContext(SIGINT, SIGTERM)` → stop accepting, drain in-flight (Fiber `ShutdownWithContext`, gRPC `GracefulStop`), cancel worker, exit 0 |
 | Health | `GET /healthz` (public) → `200 {"status":"ok"}`; compose healthcheck uses it |
-| Body limit | Fiber `Config.BodyLimit` 1 MB per request; unknown JSON fields rejected (password not smuggled through update) |
+| Body limit | Fiber `Config.BodyLimit` 1 MB per request → 413 `REQUEST_TOO_LARGE`; unknown JSON fields rejected (password not smuggled through update) |
+| Server timeouts | Fiber: read 10s / write 15s / idle 60s (Fiber default is unlimited; write covers bcrypt + Mongo round-trips) |
+| Mongo pool | Driver: max pool 50 / min 5, server selection timeout 5s (bounded connections, fast fail on unreachable Mongo) |
 
 ## 7. Sample Requests (also live in README 031)
 

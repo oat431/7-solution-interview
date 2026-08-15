@@ -50,6 +50,7 @@ func errorHandler(c fiber.Ctx, err error) error {
 	var fe *fiber.Error
 	if errors.As(err, &fe) {
 		code := "INTERNAL_ERROR"
+		msg := fe.Message
 		switch fe.Code {
 		case fiber.StatusNotFound:
 			code = "NOT_FOUND"
@@ -57,8 +58,11 @@ func errorHandler(c fiber.Ctx, err error) error {
 			code = "METHOD_NOT_ALLOWED"
 		case fiber.StatusBadRequest:
 			code = "VALIDATION_ERROR"
+		case fiber.StatusRequestEntityTooLarge:
+			code = "REQUEST_TOO_LARGE"
+			msg = "Request body exceeds the size limit"
 		}
-		return writeEnvelope(c, fe.Code, code, fe.Message, nil)
+		return writeEnvelope(c, fe.Code, code, msg, nil)
 	}
 
 	status, code, msg, details := mapError(err)

@@ -24,7 +24,8 @@ standard_ref:
 | In Scope | Out of Scope |
 |----------|-------------|
 | Unit tests (domain, application, HTTP handlers, gRPC interceptor, worker) | Load/perf testing |
-| Test doubles for MongoDB + token/hash ports where needed | Real-Mongo integration suite (manual verify only — see §6) |
+| Test doubles for MongoDB + token/hash ports where needed | — |
+| Build-tagged integration suite vs real Mongo (`go test -tags integration ./internal/infrastructure/mongodb/`) | — |
 | Race detector + coverage gates | E2E browser testing (no UI) |
 
 ## 2. Strategy

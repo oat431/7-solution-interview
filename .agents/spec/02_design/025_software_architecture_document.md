@@ -176,6 +176,7 @@ flowchart TB
 | ADR-05 | bcrypt + HS256 | industry defaults for the stated requirements |
 | ADR-06 | Programmatic unique-index creation | idempotent, env-agnostic (A12) |
 | ADR-07 | No ORM/ODM | official driver is required & idiomatic |
+| ADR-08 | Operational hardening: Fiber server timeouts (10s/15s/60s), Mongo pool bounds (50/5, 5s selection), dual-stack `NetworkTCP` listener | ACT-D1/D2 + dev regression fix; bounded resources, fast fail, in-container healthchecks reachable |
 
 ---
 
