@@ -72,4 +72,4 @@ tags: [spec-index, interview, golang, mongodb, jwt, hexagonal]
 - [x] Bonus scope committed (all 6)
 - [x] Spec package written (this folder)
 - [x] Implementation — REST API, tests, Docker, gRPC, verified live (compose + smoke 13/13 + grpcurl)
-- [ ] Task 2 spec (lottery design proposal)
+- [x] Task 2 spec (lottery design proposal) — at `.agents/proposal/` (001 solution + ADRs)
