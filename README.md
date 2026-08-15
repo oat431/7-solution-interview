@@ -2,6 +2,13 @@
 
 RESTful user management API in Go with MongoDB persistence and JWT authentication, built for the 7-Solutions backend challenge — with hexagonal architecture, gRPC, Docker, input validation and graceful shutdown.
 
+## About This Submission
+
+This repository covers **both challenge tasks** and was produced **spec-first with AI assistance** — AI personas (product owner, dev, QA, security engineer) worked from written specifications under continuous human review and direction. Every significant decision has a recorded rationale, so nothing here is "AI wrote it and we can't explain it."
+
+- **Task 1 — User Management API** (this codebase): the full spec package lives in [`.agents/spec/`](.agents/spec) — business objectives mapped to the evaluation criteria, 46 Given–When–Then acceptance criteria, the API contract, architecture with ADRs, test plan, and the complete review/decision trail (handoff minutes MTG-H01 → MTG-P01).
+- **Task 2 — Lottery Search System** (design proposal, no code): the proposal package lives in [`.agents/proposal/`](.agents/proposal) — solution architecture, data structures, storage/algorithms, performance analysis, and ADRs.
+
 ## Features
 
 - ✅ User model: id, name, email (unique), password (bcrypt), createdAt
